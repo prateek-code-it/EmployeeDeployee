@@ -130,4 +130,8 @@ async function deactivateEmployee(req, res) {
     res.json({ message: 'Employee deactivated', employee: result.rows[0] });
   } catch (err) {
     console.error('Deactivate employee error:', err);
-    res.status(500).json({ error: 'Server
+    res.status(500).json({ error: 'Server error deactivating employee' });
+  }
+}
+
+module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee, deactivateEmployee };

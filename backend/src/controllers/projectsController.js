@@ -169,3 +169,97 @@ async function updateProject(req, res) {
 }
 
 // POST /api/projects/:id/progress
+
+async function addProgressUpdate(req, res) {
+  const { id } = req.params;
+  const { note, progress_percent } = req.body;
+
+  if (!note) {
+    return res.status(400).json({ error: 'note is required' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO project_progress_updates (project_id, note, progress_percent, posted_by)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [id, note, progress_percent ?? null, req.user.id]
+    );
+
+    if (progress_percent !== undefined && progress_percent !== null) {
+      await pool.query(
+        'UPDATE projects SET progress_percent = $1, updated_at = now() WHERE id = $2',
+        [progress_percent, id]
+      );
+    }
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Add progress update error:', err);
+    res.status(500).json({ error: 'Server error adding progress update' });
+  }
+}
+
+// GET /api/projects/:id/progress
+async function listProgressUpdates(req, res) {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT ppu.*, u.full_name AS posted_by_name
+       FROM project_progress_updates ppu
+       LEFT JOIN users u ON u.id = ppu.posted_by
+       WHERE ppu.project_id = $1
+       ORDER BY ppu.created_at DESC`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('List progress updates error:', err);
+    res.status(500).json({ error: 'Server error fetching progress updates' });
+  }
+}
+
+// POST /api/projects/:id/employees  (Admin only) - assign an employee to this project
+async function assignEmployee(req, res) {
+  const { id } = req.params;
+  const { employee_id } = req.body;
+
+  if (!employee_id) {
+    return res.status(400).json({ error: 'employee_id is required' });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO project_employees (project_id, employee_id)
+       VALUES ($1, $2)
+       ON CONFLICT (project_id, employee_id)
+       DO UPDATE SET removed_date = NULL, assigned_date = CURRENT_DATE`,
+      [id, employee_id]
+    );
+    res.status(201).json({ message: 'Employee assigned to project' });
+  } catch (err) {
+    console.error('Assign employee error:', err);
+    res.status(500).json({ error: 'Server error assigning employee' });
+  }
+}
+
+// DELETE /api/projects/:id/employees/:employeeId  (Admin only)
+async function removeEmployee(req, res) {
+  const { id, employeeId } = req.params;
+  try {
+    await pool.query(
+      `UPDATE project_employees SET removed_date = CURRENT_DATE
+       WHERE project_id = $1 AND employee_id = $2`,
+      [id, employeeId]
+    );
+    res.json({ message: 'Employee removed from project' });
+  } catch (err) {
+    console.error('Remove employee error:', err);
+    res.status(500).json({ error: 'Server error removing employee' });
+  }
+}
+
+module.exports = {
+  listProjects, getProject, createProject, updateProject,
+  addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
+};
+
