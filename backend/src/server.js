@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
 const projectRoutes = require('./routes/projects');
 const siteRoutes = require('./routes/sites');
+const billRoutes = require('./routes/bills');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/sites', siteRoutes);
+app.use('/api/bills', billRoutes);
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
