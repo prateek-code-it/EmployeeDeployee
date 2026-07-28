@@ -10,6 +10,7 @@ const siteRoutes = require('./routes/sites');
 const billRoutes = require('./routes/bills');
 const attendanceRoutes = require('./routes/attendance');
 const salaryRoutes = require('./routes/salary');
+const employeeRequestRoutes = require('./routes/employeeRequests');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/sites', siteRoutes);
 app.use('/api/bills', billRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/salary', salaryRoutes);
+app.use('/api/employee-requests', employeeRequestRoutes);
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
