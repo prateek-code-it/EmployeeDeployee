@@ -3,7 +3,9 @@ const router = express.Router();
 const {
   listProjects, getProject, createProject, updateProject,
   addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
+  assignSupervisor, removeSupervisor,
 } = require('../controllers/projectsController');
+
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 router.use(requireAuth); // every route below requires login
@@ -18,5 +20,7 @@ router.post('/:id/progress', requireRole('admin', 'supervisor'), addProgressUpda
 
 router.post('/:id/employees', requireRole('admin'), assignEmployee);
 router.delete('/:id/employees/:employeeId', requireRole('admin'), removeEmployee);
+router.post('/:id/supervisors', requireRole('admin'), assignSupervisor);
+router.delete('/:id/supervisors/:userId', requireRole('admin'), removeSupervisor);
 
 module.exports = router;

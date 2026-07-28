@@ -258,8 +258,45 @@ async function removeEmployee(req, res) {
   }
 }
 
+// POST /api/projects/:id/supervisors  (Admin only) - assign a Supervisor user to this project
+async function assignSupervisor(req, res) {
+  const { id } = req.params;
+  const { user_id } = req.body;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'user_id is required' });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO project_supervisors (project_id, user_id) VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [id, user_id]
+    );
+    res.status(201).json({ message: 'Supervisor assigned to project' });
+  } catch (err) {
+    console.error('Assign supervisor error:', err);
+    res.status(500).json({ error: 'Server error assigning supervisor' });
+  }
+}
+
+// DELETE /api/projects/:id/supervisors/:userId  (Admin only)
+async function removeSupervisor(req, res) {
+  const { id, userId } = req.params;
+  try {
+    await pool.query(
+      'DELETE FROM project_supervisors WHERE project_id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    res.json({ message: 'Supervisor removed from project' });
+  } catch (err) {
+    console.error('Remove supervisor error:', err);
+    res.status(500).json({ error: 'Server error removing supervisor' });
+  }
+}
+
 module.exports = {
   listProjects, getProject, createProject, updateProject,
   addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
+  assignSupervisor, removeSupervisor,
 };
-
