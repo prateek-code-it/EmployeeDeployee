@@ -34,14 +34,14 @@ EmployeeDeployee/
 ## Core Modules (planned/in progress)
 - [x] Database schema (projects tree, employees, users, bills, attendance, salary, chat, audit log)
 - [x] Auth (login, JWT, password reset, role middleware)
-- [ ] Employees management
-- [ ] Projects / Sub-projects (tender tree structure) + Sites
-- [ ] Attendance tracking
-- [ ] Salary (monthly, Pending/Partial/Paid tracking)
-- [ ] Bills & Inventory (with image upload)
-- [ ] Employee request/approval flow (Supervisor → Admin)
-- [ ] Audit trail
-- [ ] Messaging (project group chats + 1-to-1)
+- [x] Employees management
+- [x] Projects / Sub-projects (tender tree structure) + Sites
+- [x] Attendance tracking
+- [x] Salary (monthly, Pending/Partial/Paid tracking)
+- [x] Bills & Inventory (with image upload)
+- [x] Employee request/approval flow (Supervisor → Admin)
+- [x] Audit trail
+- [x] Messaging (project group chats + 1-to-1)
 - [ ] Frontend (React + Tailwind)
 
 ## Backend Setup
