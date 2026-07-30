@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Core palette */
+  --ink: #1b2430;        /* navy/charcoal - sidebar, headings */
+  --ink-soft: #5b6472;   /* secondary text */
+  --bg: #f5f6f4;         /* app background - warm concrete grey */
+  --surface: #ffffff;    /* cards, tables */
+  --line: #dadde1;       /* borders, dividers */
+  --accent: #f2a900;     /* hi-vis amber - the one accent color */
+  --accent-ink: #1b2430; /* text on amber */
+
+  /* Status colors (attendance / salary / bills) */
+  --status-good: #2e7d4f;    /* present / paid */
+  --status-good-bg: #e7f3ec;
+  --status-warn: #c77700;    /* partial / pending */
+  --status-warn-bg: #fbf0dd;
+  --status-bad: #c0392b;     /* absent / overdue */
+  --status-bad-bg: #fbe9e7;
+  --status-neutral: #5b6472; /* leave / n/a */
+  --status-neutral-bg: #eceef0;
+
+  /* Type */
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  color-scheme: light;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--ink);
+  margin: 0;
+}
+
+h1 { font-size: 28px; }
+h2 { font-size: 22px; }
+h3 { font-size: 18px; }
+
+p { margin: 0; }
+
+/* Status tag - the signature element, used consistently for attendance/salary/bill status */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 3px 10px 3px 8px;
+  border-radius: 3px;
+  position: relative;
+}
+
+.status-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-tag.status-good { background: var(--status-good-bg); color: var(--status-good); }
+.status-tag.status-warn { background: var(--status-warn-bg); color: var(--status-warn); }
+.status-tag.status-bad { background: var(--status-bad-bg); color: var(--status-bad); }
+.status-tag.status-neutral { background: var(--status-neutral-bg); color: var(--status-neutral); }
+
+code, .mono {
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
