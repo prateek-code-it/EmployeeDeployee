@@ -6,6 +6,7 @@ import ComingSoon from './components/ComingSoon';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import Employees from './pages/Employees';
 
 export default function App() {
   return (
@@ -23,7 +24,7 @@ export default function App() {
             }
           >
             <Route path="/" element={<Dashboard />} />
-            <Route path="/employees" element={<ComingSoon title="Employees" />} />
+            <Route path="/employees" element={<Employees />} />
             <Route path="/projects" element={<ComingSoon title="Projects" />} />
             <Route path="/bills" element={<ComingSoon title="Bills & Inventory" />} />
             <Route path="/attendance" element={<ComingSoon title="Attendance" />} />
