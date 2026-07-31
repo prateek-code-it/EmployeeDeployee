@@ -11,6 +11,7 @@ import Projects from './pages/Projects';
 import Bills from './pages/Bills';
 import Attendance from './pages/Attendance';
 import Material from './pages/Material';
+import Machinery from './pages/Machinery';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/bills" element={<Bills />} />
             <Route path="/attendance" element={<Attendance />} />
 	    <Route path="/material" element={<Material />} />
+	    <Route path="/machinery" element={<Machinery />} />
             <Route path="/salary" element={<ComingSoon title="Salary" />} />
             <Route path="/requests" element={<ComingSoon title="Employee Requests" />} />
             <Route path="/chat" element={<ComingSoon title="Messages" />} />
