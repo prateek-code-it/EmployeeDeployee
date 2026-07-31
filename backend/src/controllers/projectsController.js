@@ -295,8 +295,35 @@ async function removeSupervisor(req, res) {
   }
 }
 
+// DELETE /api/projects/:id  (Admin only)
+// Refuses to delete if it has sub-projects or bills, to avoid accidental data loss.
+async function deleteProject(req, res) {
+  const { id } = req.params;
+  try {
+    const children = await pool.query('SELECT id FROM projects WHERE parent_project_id = $1', [id]);
+    if (children.rows.length > 0) {
+      return res.status(400).json({ error: 'Cannot delete a project that has sub-projects. Delete those first.' });
+    }
+
+    const bills = await pool.query('SELECT id FROM bills WHERE project_id = $1', [id]);
+    if (bills.rows.length > 0) {
+      return res.status(400).json({ error: 'Cannot delete a project that has bills attached to it.' });
+    }
+
+    const result = await pool.query('DELETE FROM projects WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    res.json({ message: 'Project deleted' });
+  } catch (err) {
+    console.error('Delete project error:', err);
+    res.status(500).json({ error: 'Server error deleting project' });
+  }
+}
+
 module.exports = {
   listProjects, getProject, createProject, updateProject,
   addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
-  assignSupervisor, removeSupervisor,
+  assignSupervisor, removeSupervisor, deleteProject,
 };

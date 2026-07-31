@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Employees from './pages/Employees';
 import Projects from './pages/Projects';
 import Bills from './pages/Bills';
+import Attendance from './pages/Attendance';
 
 export default function App() {
   return (
@@ -29,7 +30,7 @@ export default function App() {
             <Route path="/employees" element={<Employees />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/bills" element={<Bills />} />
-            <Route path="/attendance" element={<ComingSoon title="Attendance" />} />
+            <Route path="/attendance" element={<Attendance />} />
             <Route path="/salary" element={<ComingSoon title="Salary" />} />
             <Route path="/requests" element={<ComingSoon title="Employee Requests" />} />
             <Route path="/chat" element={<ComingSoon title="Messages" />} />

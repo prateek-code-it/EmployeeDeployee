@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   listProjects, getProject, createProject, updateProject,
   addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
-  assignSupervisor, removeSupervisor,
+  assignSupervisor, removeSupervisor, deleteProject,
 } = require('../controllers/projectsController');
 
 const { requireAuth, requireRole } = require('../middleware/auth');
@@ -14,7 +14,7 @@ router.get('/', listProjects);
 router.get('/:id', getProject);
 router.post('/', requireRole('admin'), createProject);
 router.put('/:id', requireRole('admin'), updateProject);
-
+router.delete('/:id', requireRole('admin'), deleteProject);
 router.get('/:id/progress', listProgressUpdates);
 router.post('/:id/progress', requireRole('admin', 'supervisor'), addProgressUpdate);
 
