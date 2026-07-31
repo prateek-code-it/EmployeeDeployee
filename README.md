@@ -1,48 +1,78 @@
 # Construction Company Management System
 
-A web app for a construction contracting company to manage employees, attendance,
-salaries, projects/sub-projects (tenders), sites, bills & inventory, and internal
-messaging — all under an Admin-controlled system with role-based access.
+A web app for a construction contracting company to manage tenders/projects (with sub-projects),
+employees, attendance, salary, bills & inventory, material stock, machinery, and internal
+messaging — all under role-based access (Admin / Supervisor / Employee).
 
 ## Roles
 - **Admin** — full control over everything
-- **Supervisor** — scoped to their assigned project(s); can mark attendance, add bills,
-  post progress updates, and request new employees (pending Admin approval)
+- **Supervisor** — scoped to their assigned project(s); can mark attendance, add bills/material
+  entries, post progress updates, and request new employees (pending Admin approval)
 - **Employee** — view-only access to their own attendance & salary, plus chat
 
 ## Tech Stack
-- **Frontend:** React + Tailwind CSS
+- **Frontend:** React (Vite) + Tailwind CSS
 - **Backend:** Node.js + Express
 - **Database:** PostgreSQL
 - **Auth:** JWT-based, role-based access control
 
 ## Project Structure
+
 EmployeeDeployee/
-├── backend/ # Node.js + Express API
+├── backend/
 │ ├── src/
 │ │ ├── config/ # DB connection
-│ │ ├── middleware/ # auth (JWT verification, role checks)
-│ │ ├── controllers/ # route logic
+│ │ ├── middleware/ # auth, role checks, project-access scoping, uploads
+│ │ ├── controllers/ # route logic (one per module)
 │ │ ├── routes/ # API route definitions
 │ │ └── server.js # app entry point
-│ ├── scripts/ # one-off scripts (e.g. create-admin)
+│ ├── scripts/ # create-admin.js
 │ └── uploads/ # bill/chat image uploads
-├── frontend/ # React app (coming soon)
-├── database/ # (or schema.sql at root) PostgreSQL schema
+├── frontend/
+│ ├── src/
+│ │ ├── pages/ # one file per screen
+│ │ ├── components/ # Sidebar, Layout, Modal, ProtectedRoute
+│ │ ├── context/ # AuthContext
+│ │ └── lib/ # api.js (axios client)
+├── database/ # schema.sql + incremental migrations
 └── README.md
 
-## Core Modules (planned/in progress)
-- [x] Database schema (projects tree, employees, users, bills, attendance, salary, chat, audit log)
+## Modules
+### Backend (fully built & tested)
 - [x] Auth (login, JWT, password reset, role middleware)
-- [x] Employees management
-- [x] Projects / Sub-projects (tender tree structure) + Sites
-- [x] Attendance tracking
-- [x] Salary (monthly, Pending/Partial/Paid tracking)
+- [x] Employees
+- [x] Projects (self-referencing tender/sub-project tree) + Sites
+- [x] Supervisor-project scoping (project_supervisors)
 - [x] Bills & Inventory (with image upload)
-- [x] Employee request/approval flow (Supervisor → Admin)
+- [x] Attendance (single + bulk marking, monthly summary)
+- [x] Salary (monthly generation, Pending/Partial/Paid, payment history)
+- [x] Employee Requests (Supervisor → Admin approval flow)
 - [x] Audit trail
-- [x] Messaging (project group chats + 1-to-1)
-- [ ] Frontend (React + Tailwind)
+- [x] Messaging (group + 1-to-1 direct, image attachments)
+- [x] Material (catalog, receipts, issues, stock calculation)
+- [x] Machinery (equipment, fuel logs, maintenance, breakdowns)
+
+### Frontend
+- [x] Login / Forced password reset
+- [x] Sidebar navigation shell (role-based links)
+- [x] Employees page
+- [x] Projects tree view
+- [x] Bills & Inventory page (with photo upload/preview)
+- [x] Attendance page
+- [x] Material page (stock/receipts/issues tabs)
+- [ ] Machinery page
+- [ ] Salary page
+- [ ] Employee Requests page
+- [ ] Messages (chat) page
+- [ ] Audit Log page
+- [ ] Real Dashboard with summary stats
+
+### Planned (not started)
+- [ ] DPR (Daily Progress Report + photo gallery)
+- [ ] Purchase (Vendors, Purchase Requests, Purchase Orders, GRN)
+- [ ] Drawings (BOQ, Specifications, Revisions)
+- [ ] QA/QC (Cube Test, Inspection, Material Test, NCR)
+- [ ] Safety (Incident, PPE, Toolbox Talk, Training)
 
 ## Backend Setup
 
@@ -58,9 +88,10 @@ EmployeeDeployee/
    # edit .env with your real DB password and a generated JWT secret
 ```
 
-3. Set up the database (run schema.sql against your PostgreSQL instance):
+3. Set up the database:
 ```bash
    psql -U app_user -d construction_app -f ../schema.sql
+   # then run each file in database/ in order (add_project_supervisors.sql, add_material_module.sql, add_machinery_module.sql, ...)
 ```
 
 4. Create the initial Admin account:
@@ -73,12 +104,26 @@ EmployeeDeployee/
    npm start
 ```
 
-6. Verify:
+## Frontend Setup
+
+1. Install dependencies:
 ```bash
-   curl http://localhost:5000/api/health
+   cd frontend
+   npm install
+```
+
+2. Configure environment:
+```bash
+   cp .env.example .env   # set VITE_API_URL to your backend URL
+```
+
+3. Start the dev server:
+```bash
+   npm run dev
 ```
 
 ## Deployment Plan
 - **Development:** local Ubuntu server
 - **Production (planned):** Render or Railway (Node.js + managed PostgreSQL support)
 
+ 
