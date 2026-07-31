@@ -15,6 +15,7 @@ const auditLogRoutes = require('./routes/auditLog');
 const conversationRoutes = require('./routes/conversations');
 const materialRoutes = require('./routes/material');
 const equipmentRoutes = require('./routes/equipment');
+const attendanceUploadRoutes = require('./routes/attendanceUploads');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/audit-log', auditLogRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/equipment', equipmentRoutes);
+app.use('/api/attendance-uploads', attendanceUploadRoutes);
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
