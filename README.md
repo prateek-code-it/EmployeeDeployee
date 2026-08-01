@@ -19,24 +19,27 @@ role-based access (Admin / Supervisor / Employee).
 - **Auth:** JWT-based, role-based access control
 
 ## Project Structure
+
+```
 EmployeeDeployee/
 ├── backend/
-│ ├── src/
-│ │ ├── config/ # DB connection
-│ │ ├── middleware/ # auth, role checks, project-access scoping, file uploads
-│ │ ├── controllers/ # route logic (one per module)
-│ │ ├── routes/ # API route definitions
-│ │ └── server.js # app entry point
-│ ├── scripts/ # create-admin.js
-│ └── uploads/ # bills/, chat/, attendance-sheets/, dpr-photos/
+│   ├── src/
+│   │   ├── config/       # DB connection
+│   │   ├── middleware/   # auth, role checks, project-access scoping, file uploads
+│   │   ├── controllers/  # route logic (one per module)
+│   │   ├── routes/       # API route definitions
+│   │   └── server.js     # app entry point
+│   ├── scripts/          # create-admin.js
+│   └── uploads/          # bills/, chat/, attendance-sheets/, dpr-photos/
 ├── frontend/
-│ ├── src/
-│ │ ├── pages/ # one file per screen
-│ │ ├── components/ # Sidebar, Layout, Modal, ProtectedRoute
-│ │ ├── context/ # AuthContext
-│ │ └── lib/ # api.js (axios client)
-├── database/ # schema.sql + incremental migrations (add_*.sql)
+│   ├── src/
+│   │   ├── pages/        # one file per screen
+│   │   ├── components/   # Sidebar, Layout, Modal, ProtectedRoute
+│   │   ├── context/      # AuthContext
+│   │   └── lib/          # api.js (axios client)
+├── database/              # schema.sql + incremental migrations (add_*.sql)
 └── README.md
+```
 
 ## Modules
 
