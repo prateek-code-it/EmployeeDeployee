@@ -18,6 +18,7 @@ const equipmentRoutes = require('./routes/equipment');
 const attendanceUploadRoutes = require('./routes/attendanceUploads');
 const vendorRoutes = require('./routes/vendors');
 const purchaseRoutes = require('./routes/purchase');
+const dprRoutes = require('./routes/dpr');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/equipment', equipmentRoutes);
 app.use('/api/attendance-uploads', attendanceUploadRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/purchase', purchaseRoutes);
+app.use('/api/dpr', dprRoutes);
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
