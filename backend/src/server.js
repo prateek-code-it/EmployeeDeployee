@@ -20,6 +20,8 @@ const vendorRoutes = require('./routes/vendors');
 const purchaseRoutes = require('./routes/purchase');
 const dprRoutes = require('./routes/dpr');
 const userRoutes = require('./routes/users');
+const documentRoutes = require('./routes/documents');
+const boqRoutes = require('./routes/boq');
 
 const app = express();
 
@@ -49,6 +51,8 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/purchase', purchaseRoutes);
 app.use('/api/dpr', dprRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/boq', boqRoutes);
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
