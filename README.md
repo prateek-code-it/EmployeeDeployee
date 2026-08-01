@@ -43,7 +43,7 @@ EmployeeDeployee/
 
 ## Modules
 
-### Backend (fully built & tested — 14 modules)
+### Backend (fully built & tested — 16 modules)
 - [x] Auth (login, JWT, password reset, role middleware)
 - [x] Employees
 - [x] Projects (self-referencing tender/sub-project tree) + Sites
