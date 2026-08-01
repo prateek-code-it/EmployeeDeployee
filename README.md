@@ -59,6 +59,7 @@ EmployeeDeployee/
 - [x] Machinery (equipment, fuel logs, maintenance, breakdowns)
 - [x] Purchase (Vendors, Purchase Requests, Purchase Orders, GRN)
 - [x] DPR - Daily Progress Report (with photo gallery)
+- [x] User Management (Admin creates/manages login accounts, password resets)
 
 ### Frontend
 - [x] Login / Forced password reset
@@ -69,8 +70,9 @@ EmployeeDeployee/
 - [x] Attendance page (digital marking + physical sheet uploads)
 - [x] Material page (stock/receipts/issues tabs)
 - [x] Machinery page (equipment list + fuel/maintenance/breakdown logs)
-- [ ] Purchase page (Vendors/PR/PO/GRN)
+- [x] Purchase page (Vendors/PR/PO/GRN)
 - [ ] DPR page (daily reports + photo gallery)
+- [ ] Users page → wait, this one's done too
 - [ ] Salary page
 - [ ] Employee Requests page
 - [ ] Messages (chat) page
