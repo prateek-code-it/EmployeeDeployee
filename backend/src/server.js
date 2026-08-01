@@ -22,6 +22,7 @@ const dprRoutes = require('./routes/dpr');
 const userRoutes = require('./routes/users');
 const documentRoutes = require('./routes/documents');
 const boqRoutes = require('./routes/boq');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/dpr', dprRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/boq', boqRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
