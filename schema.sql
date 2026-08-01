@@ -248,3 +248,206 @@ CREATE INDEX idx_messages_conversation ON messages(conversation_id, created_at);
 -- ============================================================
 -- INSERT INTO users (login_id, password_hash, full_name, role, must_reset_password)
 -- VALUES ('admin', '<bcrypt-hash-generated-by-script>', 'Admin', 'admin', true);
+
+-- Links Supervisor users to the specific project(s) they manage.
+-- Admin assigns supervisors to projects using this table.
+
+CREATE TABLE IF NOT EXISTS project_supervisors (
+    project_id  INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (project_id, user_id)
+);
+
+-- Material catalog (master list of material types)
+CREATE TABLE IF NOT EXISTS materials (
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(150) NOT NULL UNIQUE,
+    unit        VARCHAR(20) NOT NULL,   -- bag, ton, kg, cft, nos, ltr, etc.
+    category    VARCHAR(100),           -- e.g. Cement, Steel, Electrical
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Material coming IN to a project (from a vendor / purchase)
+CREATE TABLE IF NOT EXISTS material_receipts (
+    id              SERIAL PRIMARY KEY,
+    project_id      INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    material_id     INTEGER NOT NULL REFERENCES materials(id),
+    quantity        NUMERIC(12,2) NOT NULL,
+    vendor_name     VARCHAR(150),
+    receipt_date    DATE NOT NULL DEFAULT CURRENT_DATE,
+    notes           TEXT,
+    received_by     INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Material going OUT of a project (used / consumed / issued to a work area)
+CREATE TABLE IF NOT EXISTS material_issues (
+    id              SERIAL PRIMARY KEY,
+    project_id      INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    material_id     INTEGER NOT NULL REFERENCES materials(id),
+    quantity        NUMERIC(12,2) NOT NULL,
+    issued_to       VARCHAR(150),  -- free text: e.g. "Foundation work", or a person's name
+    issue_date      DATE NOT NULL DEFAULT CURRENT_DATE,
+    notes           TEXT,
+    issued_by       INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_material_receipts_project ON material_receipts(project_id);
+CREATE INDEX IF NOT EXISTS idx_material_issues_project ON material_issues(project_id);
+
+-- Equipment master list
+CREATE TABLE IF NOT EXISTS equipment (
+    id                  SERIAL PRIMARY KEY,
+    name                VARCHAR(150) NOT NULL,
+    equipment_type      VARCHAR(100),           -- e.g. Excavator, Crane, Mixer, Generator
+    asset_code          VARCHAR(50) UNIQUE,     -- internal tracking number / registration
+    project_id          INTEGER REFERENCES projects(id) ON DELETE SET NULL,  -- currently assigned project, nullable
+    status              VARCHAR(20) NOT NULL DEFAULT 'active'
+                            CHECK (status IN ('active', 'maintenance', 'breakdown', 'idle')),
+    purchase_date       DATE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Fuel logs
+CREATE TABLE IF NOT EXISTS equipment_fuel_logs (
+    id              SERIAL PRIMARY KEY,
+    equipment_id    INTEGER NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    fuel_date       DATE NOT NULL DEFAULT CURRENT_DATE,
+    quantity        NUMERIC(10,2) NOT NULL,   -- liters
+    cost            NUMERIC(12,2),
+    notes           TEXT,
+    logged_by       INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Maintenance logs
+CREATE TABLE IF NOT EXISTS equipment_maintenance (
+    id              SERIAL PRIMARY KEY,
+    equipment_id    INTEGER NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    maintenance_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    description     TEXT NOT NULL,
+    cost            NUMERIC(12,2),
+    next_due_date   DATE,
+    logged_by       INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Breakdown logs
+CREATE TABLE IF NOT EXISTS equipment_breakdowns (
+    id              SERIAL PRIMARY KEY,
+    equipment_id    INTEGER NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    breakdown_date  DATE NOT NULL DEFAULT CURRENT_DATE,
+    description     TEXT NOT NULL,
+    resolved        BOOLEAN NOT NULL DEFAULT FALSE,
+    resolved_date   DATE,
+    resolution_notes TEXT,
+    reported_by     INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_equipment_project ON equipment(project_id);
+CREATE INDEX IF NOT EXISTS idx_fuel_logs_equipment ON equipment_fuel_logs(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_equipment ON equipment_maintenance(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_breakdowns_equipment ON equipment_breakdowns(equipment_id);
+
+-- Physical attendance sheet uploads (photo or PDF), scoped per site per day.
+-- This is separate from the per-employee digital attendance already tracked.
+CREATE TABLE IF NOT EXISTS attendance_uploads (
+    id              SERIAL PRIMARY KEY,
+    site_id         INTEGER NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+    upload_date     DATE NOT NULL DEFAULT CURRENT_DATE,
+    file_path       VARCHAR(500) NOT NULL,
+    file_type       VARCHAR(10) NOT NULL,   -- 'image' or 'pdf'
+    notes           TEXT,
+    uploaded_by     INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_uploads_site_date ON attendance_uploads(site_id, upload_date);
+
+-- Vendors master list
+CREATE TABLE IF NOT EXISTS vendors (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(150) NOT NULL,
+    contact_person  VARCHAR(100),
+    phone           VARCHAR(20),
+    email           VARCHAR(150),
+    address         TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Purchase Requests (PR) - raised by Admin/Supervisor, approved/rejected by Admin
+CREATE TABLE IF NOT EXISTS purchase_requests (
+    id              SERIAL PRIMARY KEY,
+    project_id      INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    description     TEXT NOT NULL,
+    estimated_cost  NUMERIC(12,2),
+    status          VARCHAR(20) NOT NULL DEFAULT 'pending'
+                        CHECK (status IN ('pending', 'approved', 'rejected', 'converted')),
+    requested_by    INTEGER REFERENCES users(id),
+    reviewed_by     INTEGER REFERENCES users(id),
+    reviewed_at     TIMESTAMPTZ,
+    rejection_reason TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Purchase Orders (PO) - issued to a vendor, optionally linked to an approved PR
+CREATE TABLE IF NOT EXISTS purchase_orders (
+    id              SERIAL PRIMARY KEY,
+    pr_id           INTEGER REFERENCES purchase_requests(id) ON DELETE SET NULL,
+    project_id      INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    vendor_id       INTEGER NOT NULL REFERENCES vendors(id),
+    po_number       VARCHAR(50) UNIQUE,
+    description     TEXT NOT NULL,
+    amount          NUMERIC(12,2) NOT NULL,
+    status          VARCHAR(20) NOT NULL DEFAULT 'open'
+                        CHECK (status IN ('open', 'partially_received', 'closed', 'cancelled')),
+    created_by      INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- GRN (Goods Receipt Note) - confirms what arrived against a PO
+CREATE TABLE IF NOT EXISTS grns (
+    id              SERIAL PRIMARY KEY,
+    po_id           INTEGER NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    received_date   DATE NOT NULL DEFAULT CURRENT_DATE,
+    description     TEXT NOT NULL,
+    notes           TEXT,
+    received_by     INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pr_project ON purchase_requests(project_id);
+CREATE INDEX IF NOT EXISTS idx_po_project ON purchase_orders(project_id);
+CREATE INDEX IF NOT EXISTS idx_po_vendor ON purchase_orders(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_grn_po ON grns(po_id);
+
+-- Daily Progress Report - one entry per project per day
+CREATE TABLE IF NOT EXISTS dpr_entries (
+    id              SERIAL PRIMARY KEY,
+    project_id      INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    report_date     DATE NOT NULL DEFAULT CURRENT_DATE,
+    work_summary    TEXT NOT NULL,
+    weather         VARCHAR(50),        -- e.g. Sunny, Rainy, Cloudy
+    manpower_count  INTEGER,
+    notes           TEXT,
+    submitted_by    INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (project_id, report_date)
+);
+
+-- Photos attached to a DPR entry (progress photo gallery)
+CREATE TABLE IF NOT EXISTS dpr_photos (
+    id              SERIAL PRIMARY KEY,
+    dpr_id          INTEGER NOT NULL REFERENCES dpr_entries(id) ON DELETE CASCADE,
+    image_path      VARCHAR(500) NOT NULL,
+    caption         VARCHAR(255),
+    uploaded_by     INTEGER REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_dpr_project_date ON dpr_entries(project_id, report_date);
+CREATE INDEX IF NOT EXISTS idx_dpr_photos_dpr ON dpr_photos(dpr_id);

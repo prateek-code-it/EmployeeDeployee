@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', roles: ['admin', 'supervisor', 'employee'], exact: true },
-  { to: '/employees', label: 'Employees', roles: ['admin', 'supervisor'] },
+  { to: '/employees', label: 'Employees', roles: ['supervisor'] },
+  { to: '/employees', label: 'Manage Employees', roles: ['admin'] },
   { to: '/projects', label: 'Projects', roles: ['admin', 'supervisor', 'employee'] },
   { to: '/bills', label: 'Bills & Inventory', roles: ['admin', 'supervisor'] },
   { to: '/material', label: 'Material', roles: ['admin', 'supervisor'] },
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/requests', label: 'Employee Requests', roles: ['admin', 'supervisor'] },
   { to: '/chat', label: 'Messages', roles: ['admin', 'supervisor', 'employee'] },
   { to: '/audit-log', label: 'Audit Log', roles: ['admin'] },
+  { to: '/users', label: 'Users', roles: ['admin'] },
 ];
 
 export default function Sidebar() {
