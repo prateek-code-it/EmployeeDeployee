@@ -60,6 +60,7 @@ EmployeeDeployee/
 - [x] Purchase (Vendors, Purchase Requests, Purchase Orders, GRN)
 - [x] DPR - Daily Progress Report (with photo gallery)
 - [x] User Management (Admin creates/manages login accounts, password resets)
+- [x] Drawings/Documents (with revision history) + BOQ (Bill of Quantities)
 
 ### Frontend
 - [x] Login / Forced password reset
