@@ -15,6 +15,7 @@ import Machinery from './pages/Machinery';
 import Purchase from './pages/Purchase';
 import Users from './pages/Users';
 import AuditLog from './pages/AuditLog';
+import Companies from './pages/Companies';
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/requests" element={<ComingSoon title="Employee Requests" />} />
             <Route path="/chat" element={<ComingSoon title="Messages" />} />
             <Route path="/audit-log" element={<AuditLog />} />
+	    <Route path="/companies" element={<Companies />} />
 	    <Route path="/users" element={<Users />} />
           </Route>
         </Routes>
