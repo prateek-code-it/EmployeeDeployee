@@ -1,3 +1,4 @@
+users.txt
 node_modules/
 .env
 *.log
@@ -6,5 +7,4 @@ uploads/*
 frontend/dist/
 frontend/build/
 frontend/.env
-users.txt
 .DS_Store
