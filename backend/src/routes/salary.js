@@ -5,11 +5,11 @@ const {
 } = require('../controllers/salaryController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
-router.use(requireAuth); // every route below requires login
+router.use(requireAuth);
 
-router.get('/', requireRole('admin', 'supervisor'), listSalaries);
-router.get('/:id', requireRole('admin', 'supervisor'), getSalary);
-router.post('/generate', requireRole('admin'), generateMonthlySalaries);
-router.post('/:id/payments', requireRole('admin'), addPayment);
+router.get('/', requireRole('super_admin', 'company_head', 'supervisor'), listSalaries);
+router.get('/:id', requireRole('super_admin', 'company_head', 'supervisor'), getSalary);
+router.post('/generate', requireRole('super_admin', 'company_head'), generateMonthlySalaries);
+router.post('/:id/payments', requireRole('super_admin', 'company_head'), addPayment);
 
 module.exports = router;

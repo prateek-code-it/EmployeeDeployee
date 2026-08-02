@@ -7,7 +7,6 @@ const uploadAttendanceSheet = require('../middleware/uploadAttendanceSheet');
 router.use(requireAuth);
 
 router.get('/', listUploads);
-router.post('/', requireRole('admin', 'supervisor'), uploadAttendanceSheet.single('file'), createUpload);
+router.post('/', requireRole('super_admin', 'company_head', 'supervisor'), uploadAttendanceSheet.single('file'), createUpload);
 
 module.exports = router;
-

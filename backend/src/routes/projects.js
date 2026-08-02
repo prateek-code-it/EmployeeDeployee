@@ -5,22 +5,23 @@ const {
   addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
   assignSupervisor, removeSupervisor, deleteProject,
 } = require('../controllers/projectsController');
-
 const { requireAuth, requireRole } = require('../middleware/auth');
 
-router.use(requireAuth); // every route below requires login
+router.use(requireAuth);
 
 router.get('/', listProjects);
 router.get('/:id', getProject);
-router.post('/', requireRole('admin'), createProject);
-router.put('/:id', requireRole('admin'), updateProject);
-router.delete('/:id', requireRole('admin'), deleteProject);
-router.get('/:id/progress', listProgressUpdates);
-router.post('/:id/progress', requireRole('admin', 'supervisor'), addProgressUpdate);
+router.post('/', requireRole('super_admin', 'company_head'), createProject);
+router.put('/:id', requireRole('super_admin', 'company_head'), updateProject);
+router.delete('/:id', requireRole('super_admin', 'company_head'), deleteProject);
 
-router.post('/:id/employees', requireRole('admin'), assignEmployee);
-router.delete('/:id/employees/:employeeId', requireRole('admin'), removeEmployee);
-router.post('/:id/supervisors', requireRole('admin'), assignSupervisor);
-router.delete('/:id/supervisors/:userId', requireRole('admin'), removeSupervisor);
+router.get('/:id/progress', listProgressUpdates);
+router.post('/:id/progress', requireRole('super_admin', 'company_head', 'supervisor'), addProgressUpdate);
+
+router.post('/:id/employees', requireRole('super_admin', 'company_head'), assignEmployee);
+router.delete('/:id/employees/:employeeId', requireRole('super_admin', 'company_head'), removeEmployee);
+
+router.post('/:id/supervisors', requireRole('super_admin', 'company_head'), assignSupervisor);
+router.delete('/:id/supervisors/:userId', requireRole('super_admin', 'company_head'), removeSupervisor);
 
 module.exports = router;

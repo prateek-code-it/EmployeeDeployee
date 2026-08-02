@@ -9,9 +9,8 @@ router.use(requireAuth);
 
 router.get('/', listDPRs);
 router.get('/:id', getDPR);
-router.post('/', requireRole('admin', 'supervisor'), requireProjectAccess, createDPR);
-router.post('/:id/photos', requireRole('admin', 'supervisor'), uploadDprPhotos.array('photos', 10), addPhotos);
-router.delete('/photos/:photoId', requireRole('admin'), deletePhoto);
+router.post('/', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, createDPR);
+router.post('/:id/photos', requireRole('super_admin', 'company_head', 'supervisor'), uploadDprPhotos.array('photos', 10), addPhotos);
+router.delete('/photos/:photoId', requireRole('super_admin', 'company_head'), deletePhoto);
 
 module.exports = router;
-

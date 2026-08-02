@@ -11,16 +11,15 @@ const { requireProjectAccess } = require('../middleware/projectAccess');
 router.use(requireAuth);
 
 router.get('/requests', listPRs);
-router.post('/requests', requireRole('admin', 'supervisor'), requireProjectAccess, createPR);
-router.post('/requests/:id/approve', requireRole('admin'), approvePR);
-router.post('/requests/:id/reject', requireRole('admin'), rejectPR);
+router.post('/requests', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, createPR);
+router.post('/requests/:id/approve', requireRole('super_admin', 'company_head'), approvePR);
+router.post('/requests/:id/reject', requireRole('super_admin', 'company_head'), rejectPR);
 
 router.get('/orders', listPOs);
 router.get('/orders/:id', getPO);
-router.post('/orders', requireRole('admin'), createPO);
-router.put('/orders/:id/close', requireRole('admin'), closePO);
+router.post('/orders', requireRole('super_admin', 'company_head'), createPO);
+router.put('/orders/:id/close', requireRole('super_admin', 'company_head'), closePO);
 
-router.post('/grn', requireRole('admin', 'supervisor'), createGRN);
+router.post('/grn', requireRole('super_admin', 'company_head', 'supervisor'), createGRN);
 
 module.exports = router;
-

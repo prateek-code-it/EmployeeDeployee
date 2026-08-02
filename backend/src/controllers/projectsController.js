@@ -1,21 +1,27 @@
 const pool = require('../config/db');
 
 // GET /api/projects
-// Returns a flat list of all projects (with parent_project_id) - frontend builds the tree.
-// Admin sees everything. Supervisor sees only projects they're linked to (directly assigned).
+// Super Admin sees all (or filters by ?company_id=). Everyone else sees only their own company's projects.
 async function listProjects(req, res) {
   try {
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'super_admin') {
+      const { company_id } = req.query;
+      if (company_id) {
+        const result = await pool.query(
+          `SELECT * FROM projects WHERE company_id = $1 ORDER BY parent_project_id NULLS FIRST, name ASC`,
+          [company_id]
+        );
+        return res.json(result.rows);
+      }
       const result = await pool.query(
         `SELECT * FROM projects ORDER BY parent_project_id NULLS FIRST, name ASC`
       );
       return res.json(result.rows);
     }
 
-    // Supervisors: for now, show all projects (read-only visibility of the tree helps
-    // navigation), but write actions are still restricted per-project via requireProjectAccess.
     const result = await pool.query(
-      `SELECT * FROM projects ORDER BY parent_project_id NULLS FIRST, name ASC`
+      `SELECT * FROM projects WHERE company_id = $1 ORDER BY parent_project_id NULLS FIRST, name ASC`,
+      [req.user.company_id]
     );
     res.json(result.rows);
   } catch (err) {
@@ -25,8 +31,6 @@ async function listProjects(req, res) {
 }
 
 // GET /api/projects/:id
-// Returns one project with its sites, assigned employees, direct children,
-// and a rolled-up total spend (this project + all descendants).
 async function getProject(req, res) {
   const { id } = req.params;
   try {
@@ -35,6 +39,10 @@ async function getProject(req, res) {
       return res.status(404).json({ error: 'Project not found' });
     }
     const project = projectResult.rows[0];
+
+    if (req.user.role !== 'super_admin' && project.company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to view this project' });
+    }
 
     const sites = await pool.query(
       `SELECT s.* FROM sites s
@@ -55,7 +63,6 @@ async function getProject(req, res) {
       [id]
     );
 
-    // Recursive rollup: sum of bills for this project + all descendants at any depth
     const rollup = await pool.query(
       `WITH RECURSIVE subtree AS (
          SELECT id FROM projects WHERE id = $1
@@ -82,15 +89,23 @@ async function getProject(req, res) {
   }
 }
 
-// POST /api/projects  (Admin only)
+// POST /api/projects  (Super Admin, Company Head)
 async function createProject(req, res) {
   const {
     parent_project_id, name, description, client_name,
-    tender_reference, start_date, end_date, site_ids,
+    tender_reference, start_date, end_date, site_ids, company_id,
   } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: 'name is required' });
+  }
+
+  let targetCompanyId = req.user.company_id;
+  if (req.user.role === 'super_admin') {
+    if (!company_id) {
+      return res.status(400).json({ error: 'company_id is required when creating a project as Super Admin' });
+    }
+    targetCompanyId = company_id;
   }
 
   const client = await pool.connect();
@@ -98,10 +113,10 @@ async function createProject(req, res) {
     await client.query('BEGIN');
 
     const result = await client.query(
-      `INSERT INTO projects (parent_project_id, name, description, client_name, tender_reference, start_date, end_date, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      `INSERT INTO projects (parent_project_id, name, description, client_name, tender_reference, start_date, end_date, created_by, company_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [parent_project_id || null, name, description || null, client_name || null,
-       tender_reference || null, start_date || null, end_date || null, req.user.id]
+       tender_reference || null, start_date || null, end_date || null, req.user.id, targetCompanyId]
     );
     const project = result.rows[0];
 
@@ -129,14 +144,21 @@ async function createProject(req, res) {
   } finally {
     client.release();
   }
-}
-
-// PUT /api/projects/:id  (Admin only)
+} 
+// PUT /api/projects/:id  (Super Admin, Company Head)
 async function updateProject(req, res) {
   const { id } = req.params;
   const { name, description, client_name, tender_reference, status, start_date, end_date } = req.body;
 
   try {
+    const existing = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (req.user.role !== 'super_admin' && existing.rows[0].company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to edit this project' });
+    }
+
     const result = await pool.query(
       `UPDATE projects
        SET name = COALESCE($1, name),
@@ -151,10 +173,6 @@ async function updateProject(req, res) {
       [name, description, client_name, tender_reference, status, start_date, end_date, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
     await pool.query(
       `INSERT INTO audit_log (table_name, record_id, action, changed_by, details)
        VALUES ('projects', $1, 'update', $2, $3)`,
@@ -168,8 +186,37 @@ async function updateProject(req, res) {
   }
 }
 
-// POST /api/projects/:id/progress
+// DELETE /api/projects/:id  (Super Admin, Company Head)
+async function deleteProject(req, res) {
+  const { id } = req.params;
+  try {
+    const existing = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (req.user.role !== 'super_admin' && existing.rows[0].company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to delete this project' });
+    }
 
+    const children = await pool.query('SELECT id FROM projects WHERE parent_project_id = $1', [id]);
+    if (children.rows.length > 0) {
+      return res.status(400).json({ error: 'Cannot delete a project that has sub-projects. Delete those first.' });
+    }
+
+    const bills = await pool.query('SELECT id FROM bills WHERE project_id = $1', [id]);
+    if (bills.rows.length > 0) {
+      return res.status(400).json({ error: 'Cannot delete a project that has bills attached to it.' });
+    }
+
+    await pool.query('DELETE FROM projects WHERE id = $1', [id]);
+    res.json({ message: 'Project deleted' });
+  } catch (err) {
+    console.error('Delete project error:', err);
+    res.status(500).json({ error: 'Server error deleting project' });
+  }
+}
+
+// POST /api/projects/:id/progress  (Super Admin, Company Head, Supervisor assigned to this project)
 async function addProgressUpdate(req, res) {
   const { id } = req.params;
   const { note, progress_percent } = req.body;
@@ -218,7 +265,7 @@ async function listProgressUpdates(req, res) {
   }
 }
 
-// POST /api/projects/:id/employees  (Admin only) - assign an employee to this project
+// POST /api/projects/:id/employees  (Super Admin, Company Head)
 async function assignEmployee(req, res) {
   const { id } = req.params;
   const { employee_id } = req.body;
@@ -242,7 +289,7 @@ async function assignEmployee(req, res) {
   }
 }
 
-// DELETE /api/projects/:id/employees/:employeeId  (Admin only)
+// DELETE /api/projects/:id/employees/:employeeId  (Super Admin, Company Head)
 async function removeEmployee(req, res) {
   const { id, employeeId } = req.params;
   try {
@@ -258,7 +305,7 @@ async function removeEmployee(req, res) {
   }
 }
 
-// POST /api/projects/:id/supervisors  (Admin only) - assign a Supervisor user to this project
+// POST /api/projects/:id/supervisors  (Super Admin, Company Head)
 async function assignSupervisor(req, res) {
   const { id } = req.params;
   const { user_id } = req.body;
@@ -280,7 +327,7 @@ async function assignSupervisor(req, res) {
   }
 }
 
-// DELETE /api/projects/:id/supervisors/:userId  (Admin only)
+// DELETE /api/projects/:id/supervisors/:userId  (Super Admin, Company Head)
 async function removeSupervisor(req, res) {
   const { id, userId } = req.params;
   try {
@@ -295,35 +342,8 @@ async function removeSupervisor(req, res) {
   }
 }
 
-// DELETE /api/projects/:id  (Admin only)
-// Refuses to delete if it has sub-projects or bills, to avoid accidental data loss.
-async function deleteProject(req, res) {
-  const { id } = req.params;
-  try {
-    const children = await pool.query('SELECT id FROM projects WHERE parent_project_id = $1', [id]);
-    if (children.rows.length > 0) {
-      return res.status(400).json({ error: 'Cannot delete a project that has sub-projects. Delete those first.' });
-    }
-
-    const bills = await pool.query('SELECT id FROM bills WHERE project_id = $1', [id]);
-    if (bills.rows.length > 0) {
-      return res.status(400).json({ error: 'Cannot delete a project that has bills attached to it.' });
-    }
-
-    const result = await pool.query('DELETE FROM projects WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    res.json({ message: 'Project deleted' });
-  } catch (err) {
-    console.error('Delete project error:', err);
-    res.status(500).json({ error: 'Server error deleting project' });
-  }
-}
-
 module.exports = {
-  listProjects, getProject, createProject, updateProject,
+  listProjects, getProject, createProject, updateProject, deleteProject,
   addProgressUpdate, listProgressUpdates, assignEmployee, removeEmployee,
-  assignSupervisor, removeSupervisor, deleteProject,
+  assignSupervisor, removeSupervisor,
 };

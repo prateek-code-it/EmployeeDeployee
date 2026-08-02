@@ -4,6 +4,6 @@ const { listAuditLog } = require('../controllers/auditController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 router.use(requireAuth);
-router.get('/', requireRole('admin'), listAuditLog);
+router.get('/', requireRole('super_admin', 'company_head'), listAuditLog);
 
 module.exports = router;

@@ -5,12 +5,11 @@ const {
 } = require('../controllers/employeeRequestsController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
-router.use(requireAuth); // every route below requires login
+router.use(requireAuth);
 
-router.get('/', requireRole('admin', 'supervisor'), listRequests);
+router.get('/', requireRole('super_admin', 'company_head', 'supervisor'), listRequests);
 router.post('/', requireRole('supervisor'), createRequest);
-router.post('/:id/approve', requireRole('admin'), approveRequest);
-router.post('/:id/reject', requireRole('admin'), rejectRequest);
+router.post('/:id/approve', requireRole('super_admin', 'company_head'), approveRequest);
+router.post('/:id/reject', requireRole('super_admin', 'company_head'), rejectRequest);
 
 module.exports = router;
-

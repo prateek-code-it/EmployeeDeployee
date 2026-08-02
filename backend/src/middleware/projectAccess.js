@@ -9,7 +9,7 @@ const pool = require('../config/db');
  * or req.params.id / req.params.project_id (for routes scoped to a project).
  */
 function requireProjectAccess(req, res, next) {
-  if (req.user.role === 'admin') {
+  if (req.user.role === 'super_admin' || req.user.role === 'company_head') {
     return next();
   }
 

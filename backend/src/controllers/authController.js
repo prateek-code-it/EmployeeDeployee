@@ -33,6 +33,7 @@ async function login(req, res) {
         role: user.role,
         employee_id: user.employee_id,
         full_name: user.full_name,
+        company_id: user.company_id,
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
@@ -47,6 +48,7 @@ async function login(req, res) {
         role: user.role,
         employee_id: user.employee_id,
         must_reset_password: user.must_reset_password,
+        company_id: user.company_id,
       },
     });
   } catch (err) {

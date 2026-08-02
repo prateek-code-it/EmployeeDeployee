@@ -6,11 +6,11 @@ const {
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { requireProjectAccess } = require('../middleware/projectAccess');
 
-router.use(requireAuth); // every route below requires login
+router.use(requireAuth);
 
 router.get('/', listAttendance);
 router.get('/summary', attendanceSummary);
-router.post('/', requireRole('admin', 'supervisor'), requireProjectAccess, markAttendance);
-router.post('/bulk', requireRole('admin', 'supervisor'), requireProjectAccess, markAttendanceBulk);
+router.post('/', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, markAttendance);
+router.post('/bulk', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, markAttendanceBulk);
 
 module.exports = router;

@@ -9,9 +9,9 @@ router.use(requireAuth);
 
 router.get('/', listDocuments);
 router.get('/:id', getDocument);
-router.post('/', requireRole('admin', 'supervisor'), requireProjectAccess, uploadDocument.single('file'), createDocument);
-router.post('/:id/revise', requireRole('admin', 'supervisor'), uploadDocument.single('file'), addRevision);
-router.put('/:id/status', requireRole('admin'), updateStatus);
+router.post('/', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, uploadDocument.single('file'), createDocument);
+router.post('/:id/revise', requireRole('super_admin', 'company_head', 'supervisor'), uploadDocument.single('file'), addRevision);
+router.put('/:id/status', requireRole('super_admin', 'company_head'), updateStatus);
 
 module.exports = router;
 

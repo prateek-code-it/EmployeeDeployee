@@ -5,14 +5,14 @@ const {
 } = require('../controllers/sitesController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
-router.use(requireAuth); // every route below requires login
+router.use(requireAuth);
 
 router.get('/', listSites);
 router.get('/:id', getSite);
-router.post('/', requireRole('admin'), createSite);
-router.put('/:id', requireRole('admin'), updateSite);
+router.post('/', requireRole('super_admin', 'company_head'), createSite);
+router.put('/:id', requireRole('super_admin', 'company_head'), updateSite);
 
-router.post('/:id/link/:projectId', requireRole('admin'), linkToProject);
-router.delete('/:id/link/:projectId', requireRole('admin'), unlinkFromProject);
+router.post('/:id/link/:projectId', requireRole('super_admin', 'company_head'), linkToProject);
+router.delete('/:id/link/:projectId', requireRole('super_admin', 'company_head'), unlinkFromProject);
 
 module.exports = router;

@@ -9,12 +9,12 @@ const {
 } = require('../controllers/employeesController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
-router.use(requireAuth); // every route below requires login
+router.use(requireAuth);
 
-router.get('/', requireRole('admin', 'supervisor'), listEmployees);
-router.get('/:id', requireRole('admin', 'supervisor'), getEmployee);
-router.post('/', requireRole('admin'), createEmployee);
-router.put('/:id', requireRole('admin'), updateEmployee);
-router.delete('/:id', requireRole('admin'), deactivateEmployee);
+router.get('/', requireRole('super_admin', 'company_head', 'supervisor'), listEmployees);
+router.get('/:id', requireRole('super_admin', 'company_head', 'supervisor'), getEmployee);
+router.post('/', requireRole('super_admin', 'company_head', 'supervisor'), createEmployee);
+router.put('/:id', requireRole('super_admin', 'company_head'), updateEmployee);
+router.delete('/:id', requireRole('super_admin', 'company_head'), deactivateEmployee);
 
 module.exports = router;

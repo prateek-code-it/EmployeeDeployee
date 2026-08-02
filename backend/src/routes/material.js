@@ -10,13 +10,13 @@ const { requireProjectAccess } = require('../middleware/projectAccess');
 router.use(requireAuth);
 
 router.get('/', listMaterials);
-router.post('/', requireRole('admin'), createMaterial);
+router.post('/', requireRole('super_admin', 'company_head'), createMaterial);
 
 router.get('/receipts', listReceipts);
-router.post('/receipts', requireRole('admin', 'supervisor'), requireProjectAccess, createReceipt);
+router.post('/receipts', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, createReceipt);
 
 router.get('/issues', listIssues);
-router.post('/issues', requireRole('admin', 'supervisor'), requireProjectAccess, createIssue);
+router.post('/issues', requireRole('super_admin', 'company_head', 'supervisor'), requireProjectAccess, createIssue);
 
 router.get('/stock', getStock);
 

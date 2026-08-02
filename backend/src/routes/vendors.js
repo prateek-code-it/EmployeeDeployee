@@ -5,6 +5,6 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 router.use(requireAuth);
 router.get('/', listVendors);
-router.post('/', requireRole('admin'), createVendor);
+router.post('/', requireRole('super_admin', 'company_head'), createVendor);
 
 module.exports = router;
