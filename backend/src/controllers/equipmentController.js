@@ -6,6 +6,11 @@ async function listEquipment(req, res) {
   const conditions = [];
   const values = [];
   let i = 1;
+
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`e.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (project_id) { conditions.push(`e.project_id = $${i++}`); values.push(project_id); }
   if (status) { conditions.push(`e.status = $${i++}`); values.push(status); }
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -65,15 +70,24 @@ async function getEquipment(req, res) {
   }
 }
 
-// POST /api/equipment  (Admin only)
+// POST /api/equipment  (Super Admin, Company Head)
 async function createEquipment(req, res) {
-  const { name, equipment_type, asset_code, project_id, purchase_date } = req.body;
+  const { name, equipment_type, asset_code, project_id, purchase_date, company_id } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
+
+  let targetCompanyId = req.user.company_id;
+  if (req.user.role === 'super_admin') {
+    if (!company_id) {
+      return res.status(400).json({ error: 'company_id is required when creating equipment as Super Admin' });
+    }
+    targetCompanyId = company_id;
+  }
+
   try {
     const result = await pool.query(
-      `INSERT INTO equipment (name, equipment_type, asset_code, project_id, purchase_date)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [name, equipment_type || null, asset_code || null, project_id || null, purchase_date || null]
+      `INSERT INTO equipment (name, equipment_type, asset_code, project_id, purchase_date, company_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, equipment_type || null, asset_code || null, project_id || null, purchase_date || null, targetCompanyId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

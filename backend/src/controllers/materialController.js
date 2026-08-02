@@ -3,7 +3,16 @@ const pool = require('../config/db');
 // GET /api/materials  (catalog - all material types)
 async function listMaterials(req, res) {
   try {
-    const result = await pool.query('SELECT * FROM materials ORDER BY name ASC');
+    if (req.user.role === 'super_admin') {
+      const { company_id } = req.query;
+      if (company_id) {
+        const result = await pool.query('SELECT * FROM materials WHERE company_id = $1 ORDER BY name ASC', [company_id]);
+        return res.json(result.rows);
+      }
+      const result = await pool.query('SELECT * FROM materials ORDER BY name ASC');
+      return res.json(result.rows);
+    }
+    const result = await pool.query('SELECT * FROM materials WHERE company_id = $1 ORDER BY name ASC', [req.user.company_id]);
     res.json(result.rows);
   } catch (err) {
     console.error('List materials error:', err);
@@ -11,16 +20,25 @@ async function listMaterials(req, res) {
   }
 }
 
-// POST /api/materials  (Admin only) - add a new material type to the catalog
+// POST /api/materials  (Super Admin, Company Head) - add a new material type to the catalog
 async function createMaterial(req, res) {
-  const { name, unit, category } = req.body;
+  const { name, unit, category, company_id } = req.body;
   if (!name || !unit) {
     return res.status(400).json({ error: 'name and unit are required' });
   }
+
+  let targetCompanyId = req.user.company_id;
+  if (req.user.role === 'super_admin') {
+    if (!company_id) {
+      return res.status(400).json({ error: 'company_id is required when creating a material as Super Admin' });
+    }
+    targetCompanyId = company_id;
+  }
+
   try {
     const result = await pool.query(
-      'INSERT INTO materials (name, unit, category) VALUES ($1, $2, $3) RETURNING *',
-      [name, unit, category || null]
+      'INSERT INTO materials (name, unit, category, company_id) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, unit, category || null, targetCompanyId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
