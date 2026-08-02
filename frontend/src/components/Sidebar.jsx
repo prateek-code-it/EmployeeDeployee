@@ -3,19 +3,19 @@ import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', roles: ['super_admin', 'company_head', 'supervisor', 'employee'], exact: true },
-  { to: '/employees', label: 'Employees', roles: ['supervisor'] },
-  { to: '/employees', label: 'Manage Employees', roles: ['super_admin'] },
-  { to: '/projects', label: 'Projects', roles: ['super_admin', 'supervisor', 'employee'] },
-  { to: '/bills', label: 'Bills & Inventory', roles: ['super_admin', 'supervisor'] },
-  { to: '/material', label: 'Material', roles: ['super_admin', 'supervisor'] },
-  { to: '/machinery', label: 'Machinery', roles: ['super_admin', 'supervisor'] },
-  { to: '/purchase', label: 'Purchase', roles: ['super_admin', 'supervisor'] },
-  { to: '/attendance', label: 'Attendance', roles: ['super_admin', 'supervisor', 'employee'] },
-  { to: '/salary', label: 'Salary', roles: ['super_admin', 'supervisor', 'employee'] },
-  { to: '/requests', label: 'Employee Requests', roles: ['super_admin', 'supervisor'] },
-  { to: '/chat', label: 'Messages', roles: ['super_admin', 'supervisor', 'employee'] },
-  { to: '/audit-log', label: 'Audit Log', roles: ['super_admin'] },
-  { to: '/users', label: 'Users', roles: ['super_admin'] },
+  { to: '/companies', label: 'Companies', roles: ['super_admin'] },
+  { to: '/employees', label: 'Employees', roles: ['company_head', 'supervisor'] },
+  { to: '/projects', label: 'Projects', roles: ['super_admin', 'company_head', 'supervisor', 'employee'] },
+  { to: '/bills', label: 'Bills & Inventory', roles: ['company_head', 'supervisor'] },
+  { to: '/material', label: 'Material', roles: ['company_head', 'supervisor'] },
+  { to: '/machinery', label: 'Machinery', roles: ['company_head', 'supervisor'] },
+  { to: '/purchase', label: 'Purchase', roles: ['company_head', 'supervisor'] },
+  { to: '/attendance', label: 'Attendance', roles: ['company_head', 'supervisor', 'employee'] },
+  { to: '/salary', label: 'Salary', roles: ['company_head', 'supervisor', 'employee'] },
+  { to: '/requests', label: 'Employee Requests', roles: ['company_head', 'supervisor'] },
+  { to: '/chat', label: 'Messages', roles: ['company_head', 'supervisor', 'employee'] },
+  { to: '/audit-log', label: 'Audit Log', roles: ['company_head'] },
+  { to: '/users', label: 'Users', roles: ['company_head'] },
 ];
 
 export default function Sidebar() {
