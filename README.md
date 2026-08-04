@@ -82,10 +82,10 @@ EmployeeDeployee/
 - [x] Idle session timeout (30min auto-logout with warning)
 - [ ] DPR page (daily reports + photo gallery)
 - [ ] Users page → wait, this one's done too
-- [ ] Salary page
-- [ ] Employee Requests page
+- [x] Salary page
+- [x] Employee Requests page
 - [ ] Messages (chat) page
-- [ ] Audit Log page
+- [x] Audit Log page
 - [ ] Real Dashboard with summary stats
 
 ### Planned (not started)
