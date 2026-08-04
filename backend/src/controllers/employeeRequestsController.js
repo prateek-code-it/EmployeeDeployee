@@ -22,7 +22,8 @@ async function createRequest(req, res) {
 }
 
 // GET /api/employee-requests?status=
-// Admin sees all. Supervisor sees only their own requests.
+// Super Admin sees all. Company Head sees their own company's requests.
+// Supervisor sees only their own requests.
 async function listRequests(req, res) {
   const { status } = req.query;
 
@@ -33,7 +34,12 @@ async function listRequests(req, res) {
   if (req.user.role === 'supervisor') {
     conditions.push(`er.requested_by = $${i++}`);
     values.push(req.user.id);
+  } else if (req.user.role === 'company_head') {
+    conditions.push(`u.company_id = $${i++}`);
+    values.push(req.user.company_id);
   }
+  // super_admin: no filter, sees everything
+
   if (status) {
     conditions.push(`er.status = $${i++}`);
     values.push(status);
@@ -60,9 +66,9 @@ async function listRequests(req, res) {
   }
 }
 
-// POST /api/employee-requests/:id/approve  (Admin only)
-// Creates the actual employee record, assigns to the requested project (if any),
-// and marks the request approved.
+// POST /api/employee-requests/:id/approve  (Super Admin, Company Head)
+// Creates the actual employee record (with the approver's company_id), assigns to the
+// requested project (if any), and marks the request approved.
 async function approveRequest(req, res) {
   const { id } = req.params;
 
@@ -80,10 +86,18 @@ async function approveRequest(req, res) {
     }
     const request = reqResult.rows[0];
 
+    // Determine which company this employee belongs to: the approver's company,
+    // unless the approver is Super Admin, in which case use the requester's company.
+    let companyId = req.user.company_id;
+    if (req.user.role === 'super_admin') {
+      const requester = await client.query('SELECT company_id FROM users WHERE id = $1', [request.requested_by]);
+      companyId = requester.rows[0]?.company_id || null;
+    }
+
     const empResult = await client.query(
-      `INSERT INTO employees (full_name, phone, trade_role, monthly_salary)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [request.full_name, request.phone, request.trade_role, request.monthly_salary]
+      `INSERT INTO employees (full_name, phone, trade_role, monthly_salary, company_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [request.full_name, request.phone, request.trade_role, request.monthly_salary, companyId]
     );
     const employee = empResult.rows[0];
 
@@ -112,7 +126,7 @@ async function approveRequest(req, res) {
   }
 }
 
-// POST /api/employee-requests/:id/reject  (Admin only)
+// POST /api/employee-requests/:id/reject  (Super Admin, Company Head)
 async function rejectRequest(req, res) {
   const { id } = req.params;
   const { rejection_reason } = req.body;
