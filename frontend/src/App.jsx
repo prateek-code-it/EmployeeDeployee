@@ -17,6 +17,7 @@ import Users from './pages/Users';
 import AuditLog from './pages/AuditLog';
 import Companies from './pages/Companies';
 import DPR from './pages/DPR';
+import Salary from './pages/Salary';
 
 export default function App() {
   return (
@@ -42,7 +43,7 @@ export default function App() {
 	    <Route path="/machinery" element={<Machinery />} />
 	    <Route path="/purchase" element={<Purchase />} />
 	    <Route path="/dpr" element={<DPR />} />
-            <Route path="/salary" element={<ComingSoon title="Salary" />} />
+            <Route path="/salary" element={<Salary />} />
             <Route path="/requests" element={<ComingSoon title="Employee Requests" />} />
             <Route path="/chat" element={<ComingSoon title="Messages" />} />
             <Route path="/audit-log" element={<AuditLog />} />
