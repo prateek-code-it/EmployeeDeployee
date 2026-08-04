@@ -48,7 +48,7 @@ EmployeeDeployee/
 
 ## Modules
 
-### Backend (fully built & tested — 16 modules)
+### Backend (fully built & tested — 18 modules)
 - [x] Auth (login, JWT, password reset, role middleware)
 - [x] Employees
 - [x] Projects (self-referencing tender/sub-project tree) + Sites
@@ -120,7 +120,7 @@ EmployeeDeployee/
 
 5. Start the server:
 ```bash
-   npm start
+   npm start # run it in the backend directory
 ```
 
 ## Frontend Setup
@@ -138,10 +138,10 @@ EmployeeDeployee/
 
 3. Start the dev server:
 ```bash
-   npm run dev
+   npm run dev # in the frontend directory
 ```
 
 ## Deployment Plan
 - **Development:** local Ubuntu server (in a VirtualBox VM on Fedora, accessed via SSH tunnel/port-forward)
 - **Production (planned):** Render or Railway (Node.js + managed PostgreSQL support)
- 
+- **Deployment:** Planned to deploy on online site to test the project 
