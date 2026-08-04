@@ -6,11 +6,16 @@ machinery, purchasing, daily progress reports, and internal messaging — all un
 role-based access (Admin / Supervisor / Employee).
 
 ## Roles
-- **Admin** — full control over everything
-- **Supervisor** — scoped to their assigned project(s); can mark attendance, add bills/material
-  entries, log DPRs, raise purchase requests, post progress updates, and request new employees
-  (pending Admin approval)
+- **Super Admin** — platform-level; creates companies and their first Company Head; can see across all companies
+- **Company Head** — runs one company (same powers Admin used to have), scoped to their own company's data only
+- **Supervisor** — scoped to their assigned project(s) within their company; can mark attendance, add bills/material entries, log DPRs, raise purchase requests, post progress updates, and create employees directly
 - **Employee** — view-only access to their own attendance & salary, plus chat
+
+## Multi-Tenancy
+The app supports multiple separate companies on one platform, each with fully isolated data
+(employees, projects, bills, sites, materials, equipment, vendors, users). Company isolation is
+enforced via a `company_id` column on core tables and checked in every controller. Super Admin
+is the only role that can see across companies.
 
 ## Tech Stack
 - **Frontend:** React (Vite) + Tailwind CSS
@@ -61,6 +66,7 @@ EmployeeDeployee/
 - [x] DPR - Daily Progress Report (with photo gallery)
 - [x] User Management (Admin creates/manages login accounts, password resets)
 - [x] Drawings/Documents (with revision history) + BOQ (Bill of Quantities)
+- [x] Multi-tenancy: Companies module + company_id scoping across Employees, Projects, Sites, Materials, Equipment, Vendors, Users
 
 ### Frontend
 - [x] Login / Forced password reset
@@ -72,6 +78,8 @@ EmployeeDeployee/
 - [x] Material page (stock/receipts/issues tabs)
 - [x] Machinery page (equipment list + fuel/maintenance/breakdown logs)
 - [x] Purchase page (Vendors/PR/PO/GRN)
+- [x] Companies page (Super Admin)
+- [x] Idle session timeout (30min auto-logout with warning)
 - [ ] DPR page (daily reports + photo gallery)
 - [ ] Users page → wait, this one's done too
 - [ ] Salary page
