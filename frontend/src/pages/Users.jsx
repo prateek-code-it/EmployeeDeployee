@@ -126,7 +126,7 @@ export default function Users() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {u.role !== 'admin' && (
+                    {u.role !== 'super_admin' && (
                       <>
                         <button onClick={() => handleResetPassword(u)} className="text-[var(--ink-soft)] hover:text-[var(--ink)] mr-3 text-sm">
                           Reset Password

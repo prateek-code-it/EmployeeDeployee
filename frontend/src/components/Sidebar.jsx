@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/material', label: 'Material', roles: ['company_head', 'supervisor'] },
   { to: '/machinery', label: 'Machinery', roles: ['company_head', 'supervisor'] },
   { to: '/purchase', label: 'Purchase', roles: ['company_head', 'supervisor'] },
+  { to: '/dpr', label: 'Daily Reports', roles: ['company_head', 'supervisor'] },
   { to: '/attendance', label: 'Attendance', roles: ['company_head', 'supervisor', 'employee'] },
   { to: '/salary', label: 'Salary', roles: ['company_head', 'supervisor', 'employee'] },
   { to: '/requests', label: 'Employee Requests', roles: ['company_head', 'supervisor'] },

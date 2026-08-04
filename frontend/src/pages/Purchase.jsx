@@ -21,7 +21,7 @@ function poStatusClass(status) {
 
 export default function Purchase() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin';
 
   const [activeTab, setActiveTab] = useState('Requests');
   const [projects, setProjects] = useState([]);

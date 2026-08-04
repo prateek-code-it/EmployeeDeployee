@@ -13,7 +13,7 @@ const EMPTY_FORM = {
 
 export default function Bills() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin';
 
   const [bills, setBills] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);

@@ -12,7 +12,7 @@ function statusTagClass(status) {
 
 export default function Machinery() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin';
 
   const [equipmentList, setEquipmentList] = useState([]);
   const [projects, setProjects] = useState([]);

@@ -7,7 +7,8 @@ const EMPTY_FORM = { full_name: '', phone: '', trade_role: '', monthly_salary: '
 
 export default function Employees() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin';
+  const canCreate = isAdmin || user?.role === 'supervisor';
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,7 @@ export default function Employees() {
           <h1>Employees</h1>
           <p className="text-[var(--ink-soft)] text-sm mt-1">{employees.length} total</p>
         </div>
-        {isAdmin && (
+        {canCreate && (
           <button
             onClick={openAddModal}
             className="px-4 py-2 rounded-md bg-[var(--accent)] text-[var(--accent-ink)] font-semibold text-sm hover:brightness-95 transition"

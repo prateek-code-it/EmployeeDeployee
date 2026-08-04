@@ -61,7 +61,7 @@ const EMPTY_FORM = { name: '', description: '', client_name: '', tender_referenc
 
 export default function Projects() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin';
 
   const [projects, setProjects] = useState([]);
   const [tree, setTree] = useState([]);
