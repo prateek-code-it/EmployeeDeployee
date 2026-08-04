@@ -80,7 +80,7 @@ EmployeeDeployee/
 - [x] Purchase page (Vendors/PR/PO/GRN)
 - [x] Companies page (Super Admin)
 - [x] Idle session timeout (30min auto-logout with warning)
-- [ ] DPR page (daily reports + photo gallery)
+- [x] DPR page (daily reports + photo gallery)
 - [ ] Users page → wait, this one's done too
 - [x] Salary page
 - [x] Employee Requests page
