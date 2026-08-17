@@ -75,8 +75,16 @@ export default function Projects() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignEmployeeId, setAssignEmployeeId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
   useEffect(() => {
     loadProjects();
+    if (isAdmin) {
+      api.get('/employees').then((res) => setAllEmployees(res.data)).catch(console.error);
+    }
   }, []);
 
   useEffect(() => {
@@ -140,6 +148,32 @@ export default function Projects() {
       setFormError(err.response?.data?.error || 'Failed to create project');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAssignEmployee(e) {
+    e.preventDefault();
+    if (!assignEmployeeId) return;
+    setAssigning(true);
+    try {
+      await api.post(`/projects/${selectedDetail.id}/employees`, { employee_id: assignEmployeeId });
+      setShowAssignModal(false);
+      setAssignEmployeeId('');
+      loadDetail(selectedDetail.id);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to assign employee');
+    } finally {
+      setAssigning(false);
+    }
+  }
+
+  async function handleRemoveEmployee(employeeId) {
+    if (!confirm('Remove this employee from the project?')) return;
+    try {
+      await api.delete(`/projects/${selectedDetail.id}/employees/${employeeId}`);
+      loadDetail(selectedDetail.id);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to remove employee');
     }
   }
 
@@ -249,13 +283,34 @@ export default function Projects() {
             </div>
 
             <div className="mb-6">
-              <h3 className="text-sm mb-2">Team on this project</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm">Team on this project</h3>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setAssignEmployeeId(''); setShowAssignModal(true); }}
+                    className="text-xs text-[var(--ink-soft)] hover:text-[var(--ink)] underline"
+                  >
+                    + Assign employee
+                  </button>
+                )}
+              </div>
               {selectedDetail.employees.length === 0 ? (
                 <p className="text-sm text-[var(--ink-soft)]">No one assigned yet.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {selectedDetail.employees.map((emp) => (
-                    <span key={emp.id} className="status-tag status-neutral">{emp.full_name}</span>
+                    <span key={emp.id} className="status-tag status-neutral">
+                      {emp.full_name}
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleRemoveEmployee(emp.id)}
+                          className="ml-1.5 hover:text-[var(--status-bad)]"
+                          aria-label={`Remove ${emp.full_name}`}
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </span>
                   ))}
                 </div>
               )}
@@ -322,6 +377,32 @@ export default function Projects() {
               className="w-full py-2.5 rounded-md bg-[var(--accent)] text-[var(--accent-ink)] font-semibold text-sm hover:brightness-95 transition disabled:opacity-60"
             >
               {saving ? 'Creating...' : 'Create'}
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {showAssignModal && (
+        <Modal title="Assign Employee to Project" onClose={() => setShowAssignModal(false)}>
+          <form onSubmit={handleAssignEmployee}>
+            <label className="block text-sm font-medium mb-1.5">Employee</label>
+            <select
+              required
+              value={assignEmployeeId}
+              onChange={(e) => setAssignEmployeeId(e.target.value)}
+              className="w-full px-3 py-2 mb-6 border border-[var(--line)] rounded-md focus:border-[var(--accent)] outline-none"
+            >
+              <option value="">Select an employee</option>
+              {allEmployees
+                .filter((e) => !selectedDetail?.employees.some((assigned) => assigned.id === e.id))
+                .map((e) => <option key={e.id} value={e.id}>{e.full_name}</option>)}
+            </select>
+            <button
+              type="submit"
+              disabled={assigning}
+              className="w-full py-2.5 rounded-md bg-[var(--accent)] text-[var(--accent-ink)] font-semibold text-sm hover:brightness-95 disabled:opacity-60"
+            >
+              {assigning ? 'Assigning...' : 'Assign to Project'}
             </button>
           </form>
         </Modal>
