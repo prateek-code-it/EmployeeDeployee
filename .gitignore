@@ -8,3 +8,4 @@ frontend/dist/
 frontend/build/
 frontend/.env
 .DS_Store
+issues.txt
