@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', roles: ['super_admin', 'company_head', 'supervisor', 'employee'], exact: true },
   { to: '/companies', label: 'Companies', roles: ['super_admin'] },
-  { to: '/employees', label: 'Employees', roles: ['company_head', 'supervisor'] },
+  { to: '/employees', label: 'Employees', roles: ['company_head', 'supervisor','super_admin'] },
   { to: '/projects', label: 'Projects', roles: ['super_admin', 'company_head', 'supervisor', 'employee'] },
   { to: '/bills', label: 'Bills & Inventory', roles: ['company_head', 'supervisor'] },
   { to: '/material', label: 'Material', roles: ['company_head', 'supervisor'] },
