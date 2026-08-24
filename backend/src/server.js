@@ -24,6 +24,8 @@ const documentRoutes = require('./routes/documents');
 const boqRoutes = require('./routes/boq');
 const dashboardRoutes = require('./routes/dashboard');
 const companyRoutes = require('./routes/companies');
+const postRoutes = require('./routes/posts');
+
 
 const app = express();
 
@@ -57,6 +59,8 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/boq', boqRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/posts', postRoutes);
+
 
 // More routes (employees, projects, bills, attendance, salary, chat)
 // will be added here in the next stages.
