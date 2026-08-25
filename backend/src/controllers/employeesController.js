@@ -2,10 +2,19 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const pool = require('../config/db');
 
-async function generateEmpCode(client, companyId) {
+async function generateEmpCode(client, companyId, postId) {
+  const companyResult = await client.query('SELECT company_code FROM companies WHERE id = $1', [companyId]);
+  const companyCode = companyResult.rows[0]?.company_code || 'GEN';
+
+  let postCode = 'GEN';
+  if (postId) {
+    const postResult = await client.query('SELECT post_code FROM posts WHERE id = $1', [postId]);
+    postCode = postResult.rows[0]?.post_code || 'GEN';
+  }
+
   let seq = 1;
   while (true) {
-    const code = `EMP-${String(seq).padStart(4, '0')}`;
+    const code = `${companyCode}-${postCode}-${String(seq).padStart(3, '0')}`;
     const existing = await client.query(
       'SELECT id FROM employees WHERE company_id = $1 AND emp_code = $2',
       [companyId, code]
@@ -117,7 +126,7 @@ async function createEmployee(req, res) {
   try {
     await client.query('BEGIN');
 
-    const empCode = await generateEmpCode(client, targetCompanyId);
+    const empCode = await generateEmpCode(client, targetCompanyId, post_id || null);
 
     const empResult = await client.query(
       `INSERT INTO employees (full_name, phone, email, trade_role, post_id, monthly_salary, company_id, emp_code)
@@ -126,8 +135,8 @@ async function createEmployee(req, res) {
     );
     const employee = empResult.rows[0];
 
-    // Auto-create a login account for this employee
-    const loginBase = empCode.toLowerCase().replace('-', '');
+    // Auto-create a login account for this employee (login_id derived from emp_code)
+    const loginBase = empCode.toLowerCase().replace(/-/g, '');
     const loginId = await generateLoginId(client, loginBase);
     const tempPassword = crypto.randomBytes(4).toString('hex');
     const passwordHash = await bcrypt.hash(tempPassword, 10);
