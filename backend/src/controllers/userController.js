@@ -56,8 +56,11 @@ async function createUser(req, res) {
   if (!full_name || !role) {
     return res.status(400).json({ error: 'full_name and role are required' });
   }
-  if (!['supervisor', 'employee'].includes(role)) {
-    return res.status(400).json({ error: 'role must be supervisor or employee' });
+    if (!['supervisor', 'employee', 'hr'].includes(role)) {
+    return res.status(400).json({ error: 'role must be supervisor, employee, or hr' });
+  }
+  if (role === 'hr' && !['super_admin', 'company_head'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Only Company Head or Super Admin can create HR accounts' });
   }
 
   let targetCompanyId = req.user.company_id;

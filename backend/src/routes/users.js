@@ -6,7 +6,7 @@ const {
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 router.use(requireAuth);
-router.use(requireRole('super_admin', 'company_head'));
+router.use(requireRole('super_admin', 'company_head','hr'));
 
 router.get('/', listUsers);
 router.post('/', createUser);
