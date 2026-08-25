@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', roles: ['super_admin', 'company_head', 'supervisor', 'employee'], exact: true },
   { to: '/companies', label: 'Companies', roles: ['super_admin'] },
-  { to: '/employees', label: 'Employees', roles: ['company_head', 'supervisor','super_admin'] },
+  { to: '/employees', label: 'Employees', roles: ['company_head', 'supervisor'] },
   { to: '/projects', label: 'Projects', roles: ['super_admin', 'company_head', 'supervisor', 'employee'] },
   { to: '/bills', label: 'Bills & Inventory', roles: ['company_head', 'supervisor'] },
   { to: '/material', label: 'Material', roles: ['company_head', 'supervisor'] },
@@ -15,8 +15,8 @@ const NAV_ITEMS = [
   { to: '/salary', label: 'Salary', roles: ['company_head', 'supervisor', 'employee'] },
   { to: '/requests', label: 'Employee Requests', roles: ['company_head', 'supervisor'] },
   { to: '/chat', label: 'Messages', roles: ['company_head', 'supervisor', 'employee'] },
-  { to: '/audit-log', label: 'Audit Log', roles: ['company_head'] },
-  { to: '/users', label: 'Users', roles: ['company_head'] },
+  { to: '/audit-log', label: 'Audit Log', roles: ['company_head', 'super_admin'] },
+  { to: '/users', label: 'Users', roles: ['company_head', 'super_admin'] },
 ];
 
 export default function Sidebar() {

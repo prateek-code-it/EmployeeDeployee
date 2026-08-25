@@ -1,27 +1,36 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 import Modal from '../components/Modal';
 
 export default function Users() {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
+
   const [users, setUsers] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [filterCompany, setFilterCompany] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ full_name: '', role: 'supervisor', employee_id: '' });
+  const [form, setForm] = useState({ full_name: '', role: 'supervisor', employee_id: '', company_id: '' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [credentialsResult, setCredentialsResult] = useState(null);
 
   useEffect(() => {
     loadUsers();
-    api.get('/employees').then((res) => setEmployees(res.data)).catch(console.error);
-  }, []);
+    if (isSuperAdmin) {
+      api.get('/companies').then((res) => setCompanies(res.data)).catch(console.error);
+    }
+  }, [filterCompany]);
 
   async function loadUsers() {
     setLoading(true);
     try {
-      const res = await api.get('/users');
+      const params = {};
+      if (isSuperAdmin && filterCompany) params.company_id = filterCompany;
+      const res = await api.get('/users', { params });
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -31,7 +40,7 @@ export default function Users() {
   }
 
   function openAddModal() {
-    setForm({ full_name: '', role: 'supervisor', employee_id: '' });
+    setForm({ full_name: '', role: 'supervisor', employee_id: '', company_id: filterCompany || '' });
     setFormError('');
     setCredentialsResult(null);
     setShowModal(true);
@@ -43,6 +52,11 @@ export default function Users() {
     setSaving(true);
     try {
       const payload = { ...form, employee_id: form.employee_id || null };
+      if (isSuperAdmin && !payload.company_id) {
+        setFormError('Please select a company');
+        setSaving(false);
+        return;
+      }
       const res = await api.post('/users', payload);
       setCredentialsResult(res.data);
       loadUsers();
@@ -89,12 +103,24 @@ export default function Users() {
           <h1>Users</h1>
           <p className="text-[var(--ink-soft)] text-sm mt-1">{users.length} login accounts</p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 rounded-md bg-[var(--accent)] text-[var(--accent-ink)] font-semibold text-sm hover:brightness-95 transition"
-        >
-          + Add User
-        </button>
+        <div className="flex items-center gap-2">
+          {isSuperAdmin && (
+            <select
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+              className="px-3 py-2 border border-[var(--line)] rounded-md text-sm bg-[var(--surface)]"
+            >
+              <option value="">All Companies</option>
+              {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
+          <button
+            onClick={openAddModal}
+            className="px-4 py-2 rounded-md bg-[var(--accent)] text-[var(--accent-ink)] font-semibold text-sm hover:brightness-95 transition"
+          >
+            + Add User
+          </button>
+        </div>
       </div>
 
       <div className="bg-[var(--surface)] border border-[var(--line)] rounded-lg overflow-hidden">
@@ -104,19 +130,27 @@ export default function Users() {
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Login ID</th>
               <th className="px-4 py-3 font-medium">Role</th>
+              {isSuperAdmin && <th className="px-4 py-3 font-medium">Company</th>}
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-[var(--ink-soft)]">Loading...</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-[var(--ink-soft)]">Loading...</td></tr>
+            ) : users.length === 0 ? (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-[var(--ink-soft)]">No users found.</td></tr>
             ) : (
               users.map((u) => (
                 <tr key={u.id} className="border-b border-[var(--line)] last:border-0">
                   <td className="px-4 py-3 font-medium">{u.full_name}</td>
                   <td className="px-4 py-3 mono">{u.login_id}</td>
-                  <td className="px-4 py-3 capitalize">{u.role}</td>
+                  <td className="px-4 py-3 capitalize">{u.role.replace('_', ' ')}</td>
+                  {isSuperAdmin && (
+                    <td className="px-4 py-3 text-[var(--ink-soft)]">
+                      {companies.find((c) => c.id === u.company_id)?.name || '—'}
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <span className={`status-tag ${u.is_active ? 'status-good' : 'status-neutral'}`}>
                       {u.is_active ? 'Active' : 'Inactive'}
@@ -185,14 +219,18 @@ export default function Users() {
                 <option value="supervisor">Supervisor</option>
                 <option value="employee">Employee</option>
               </select>
-              <label className="block text-sm font-medium mb-1.5">Link to Employee record (optional)</label>
-              <select
-                value={form.employee_id} onChange={(e) => setForm({ ...form, employee_id: e.target.value })}
-                className="w-full px-3 py-2 mb-6 border border-[var(--line)] rounded-md focus:border-[var(--accent)] outline-none"
-              >
-                <option value="">None</option>
-                {employees.map((e) => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-              </select>
+              {isSuperAdmin && (
+                <>
+                  <label className="block text-sm font-medium mb-1.5">Company</label>
+                  <select
+                    required value={form.company_id} onChange={(e) => setForm({ ...form, company_id: e.target.value })}
+                    className="w-full px-3 py-2 mb-4 border border-[var(--line)] rounded-md focus:border-[var(--accent)] outline-none"
+                  >
+                    <option value="">Select a company</option>
+                    {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </>
+              )}
               <button
                 type="submit" disabled={saving}
                 className="w-full py-2.5 rounded-md bg-[var(--accent)] text-[var(--accent-ink)] font-semibold text-sm hover:brightness-95 disabled:opacity-60"
