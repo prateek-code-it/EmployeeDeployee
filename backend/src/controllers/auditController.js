@@ -1,13 +1,23 @@
 const pool = require('../config/db');
 
 // GET /api/audit-log?table_name=&record_id=&changed_by=
-// Admin only. Returns the audit trail, most recent first.
+// Super Admin sees all (or filters by ?company_id=). Company Head sees only their own company.
 async function listAuditLog(req, res) {
-  const { table_name, record_id, changed_by } = req.query;
+  const { table_name, record_id, changed_by, company_id } = req.query;
 
   const conditions = [];
   const values = [];
   let i = 1;
+
+  if (req.user.role === 'super_admin') {
+    if (company_id) {
+      conditions.push(`u.company_id = $${i++}`);
+      values.push(company_id);
+    }
+  } else {
+    conditions.push(`u.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
 
   if (table_name) {
     conditions.push(`al.table_name = $${i++}`);
