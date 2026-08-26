@@ -1,7 +1,6 @@
 const pool = require('../config/db');
 
 // GET /api/projects
-// Super Admin sees all (or filters by ?company_id=). Everyone else sees only their own company's projects.
 async function listProjects(req, res) {
   try {
     if (req.user.role === 'super_admin') {
@@ -31,6 +30,7 @@ async function listProjects(req, res) {
 }
 
 // GET /api/projects/:id
+// Includes a role-wise team summary (count of employees per post/designation).
 async function getProject(req, res) {
   const { id } = req.params;
   try {
@@ -52,11 +52,20 @@ async function getProject(req, res) {
     );
 
     const employees = await pool.query(
-      `SELECT e.* FROM employees e
+      `SELECT e.*, po.name AS post_name
+       FROM employees e
        JOIN project_employees pe ON pe.employee_id = e.id
+       LEFT JOIN posts po ON po.id = e.post_id
        WHERE pe.project_id = $1 AND pe.removed_date IS NULL`,
       [id]
     );
+
+    // Role-wise resource summary: count of employees per post
+    const teamSummary = {};
+    employees.rows.forEach((e) => {
+      const key = e.post_name || 'Unassigned';
+      teamSummary[key] = (teamSummary[key] || 0) + 1;
+    });
 
     const children = await pool.query(
       'SELECT * FROM projects WHERE parent_project_id = $1 ORDER BY name ASC',
@@ -80,6 +89,7 @@ async function getProject(req, res) {
       ...project,
       sites: sites.rows,
       employees: employees.rows,
+      team_summary: teamSummary,
       children: children.rows,
       total_spend: parseFloat(rollup.rows[0].total_spend),
     });
@@ -93,7 +103,7 @@ async function getProject(req, res) {
 async function createProject(req, res) {
   const {
     parent_project_id, name, description, client_name,
-    tender_reference, start_date, end_date, site_ids, company_id,
+    tender_reference, work_order_value, start_date, end_date, site_ids, company_id,
   } = req.body;
 
   if (!name) {
@@ -113,10 +123,10 @@ async function createProject(req, res) {
     await client.query('BEGIN');
 
     const result = await client.query(
-      `INSERT INTO projects (parent_project_id, name, description, client_name, tender_reference, start_date, end_date, created_by, company_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      `INSERT INTO projects (parent_project_id, name, description, client_name, tender_reference, work_order_value, start_date, end_date, created_by, company_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
       [parent_project_id || null, name, description || null, client_name || null,
-       tender_reference || null, start_date || null, end_date || null, req.user.id, targetCompanyId]
+       tender_reference || null, work_order_value || null, start_date || null, end_date || null, req.user.id, targetCompanyId]
     );
     const project = result.rows[0];
 
@@ -144,11 +154,12 @@ async function createProject(req, res) {
   } finally {
     client.release();
   }
-} 
+}
+
 // PUT /api/projects/:id  (Super Admin, Company Head)
 async function updateProject(req, res) {
   const { id } = req.params;
-  const { name, description, client_name, tender_reference, status, start_date, end_date } = req.body;
+  const { name, description, client_name, tender_reference, work_order_value, status, start_date, end_date } = req.body;
 
   try {
     const existing = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
@@ -165,12 +176,13 @@ async function updateProject(req, res) {
            description = COALESCE($2, description),
            client_name = COALESCE($3, client_name),
            tender_reference = COALESCE($4, tender_reference),
-           status = COALESCE($5, status),
-           start_date = COALESCE($6, start_date),
-           end_date = COALESCE($7, end_date),
+           work_order_value = COALESCE($5, work_order_value),
+           status = COALESCE($6, status),
+           start_date = COALESCE($7, start_date),
+           end_date = COALESCE($8, end_date),
            updated_at = now()
-       WHERE id = $8 RETURNING *`,
-      [name, description, client_name, tender_reference, status, start_date, end_date, id]
+       WHERE id = $9 RETURNING *`,
+      [name, description, client_name, tender_reference, work_order_value, status, start_date, end_date, id]
     );
 
     await pool.query(
@@ -266,15 +278,32 @@ async function listProgressUpdates(req, res) {
 }
 
 // POST /api/projects/:id/employees  (Super Admin, Company Head)
+// Warns (but does not block) if the employee is already actively assigned to another project.
 async function assignEmployee(req, res) {
   const { id } = req.params;
-  const { employee_id } = req.body;
+  const { employee_id, confirm_multi_assign } = req.body;
 
   if (!employee_id) {
     return res.status(400).json({ error: 'employee_id is required' });
   }
 
   try {
+    const existingAssignments = await pool.query(
+      `SELECT pe.project_id, p.name AS project_name
+       FROM project_employees pe
+       JOIN projects p ON p.id = pe.project_id
+       WHERE pe.employee_id = $1 AND pe.removed_date IS NULL AND pe.project_id != $2`,
+      [employee_id, id]
+    );
+
+    if (existingAssignments.rows.length > 0 && !confirm_multi_assign) {
+      return res.status(409).json({
+        warning: 'already_assigned',
+        message: 'This employee is already assigned to another active project.',
+        existing_projects: existingAssignments.rows.map((r) => r.project_name),
+      });
+    }
+
     await pool.query(
       `INSERT INTO project_employees (project_id, employee_id)
        VALUES ($1, $2)
