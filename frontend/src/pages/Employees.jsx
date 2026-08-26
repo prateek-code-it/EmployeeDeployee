@@ -7,7 +7,7 @@ const EMPTY_FORM = { full_name: '', phone: '', email: '', post_id: '', monthly_s
 
 export default function Employees() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin';
+  const isAdmin = user?.role === 'company_head' || user?.role === 'super_admin' || user?.role === 'hr';
   const canCreate = isAdmin || user?.role === 'supervisor';
 
   const [employees, setEmployees] = useState([]);

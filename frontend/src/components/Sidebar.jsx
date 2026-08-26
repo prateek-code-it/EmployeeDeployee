@@ -2,9 +2,9 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', roles: ['super_admin', 'company_head', 'supervisor', 'employee'], exact: true },
+  { to: '/', label: 'Dashboard', roles: ['super_admin', 'company_head', 'hr', 'supervisor', 'employee'], exact: true },
   { to: '/companies', label: 'Companies', roles: ['super_admin'] },
-  { to: '/employees', label: 'Employees', roles: ['company_head', 'supervisor'] },
+  { to: '/employees', label: 'Employees', roles: ['company_head', 'hr', 'supervisor'] },
   { to: '/projects', label: 'Projects', roles: ['super_admin', 'company_head', 'supervisor', 'employee'] },
   { to: '/bills', label: 'Bills & Inventory', roles: ['company_head', 'supervisor'] },
   { to: '/material', label: 'Material', roles: ['company_head', 'supervisor'] },
@@ -12,11 +12,11 @@ const NAV_ITEMS = [
   { to: '/purchase', label: 'Purchase', roles: ['company_head', 'supervisor'] },
   { to: '/dpr', label: 'Daily Reports', roles: ['company_head', 'supervisor'] },
   { to: '/attendance', label: 'Attendance', roles: ['company_head', 'supervisor', 'employee'] },
-  { to: '/salary', label: 'Salary', roles: ['company_head', 'supervisor', 'employee'] },
-  { to: '/requests', label: 'Employee Requests', roles: ['company_head', 'supervisor'] },
+  { to: '/salary', label: 'Salary', roles: ['company_head', 'hr', 'supervisor', 'employee'] },
+  { to: '/requests', label: 'Employee Requests', roles: ['company_head', 'hr', 'supervisor'] },
   { to: '/chat', label: 'Messages', roles: ['company_head', 'supervisor', 'employee'] },
   { to: '/audit-log', label: 'Audit Log', roles: ['company_head', 'super_admin'] },
-  { to: '/users', label: 'Users', roles: ['company_head', 'super_admin'] },
+  { to: '/users', label: 'Users', roles: ['company_head', 'hr', 'super_admin'] },
 ];
 
 export default function Sidebar() {
@@ -54,7 +54,7 @@ export default function Sidebar() {
 
       <div className="px-4 py-4 border-t border-white/10">
         <p className="text-sm font-medium truncate">{user?.full_name}</p>
-        <p className="text-xs text-white/50 capitalize mb-3">{user?.role}</p>
+        <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
         <button
           onClick={logout}
           className="w-full text-sm px-3 py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition"

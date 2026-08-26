@@ -218,6 +218,7 @@ export default function Users() {
               >
                 <option value="supervisor">Supervisor</option>
                 <option value="employee">Employee</option>
+		<option value="hr">HR</option>
               </select>
               {isSuperAdmin && (
                 <>
