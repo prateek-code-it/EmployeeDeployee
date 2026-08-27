@@ -8,6 +8,10 @@ async function listBills(req, res) {
   const values = [];
   let i = 1;
 
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`p.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (project_id) {
     conditions.push(`b.project_id = $${i++}`);
     values.push(project_id);
@@ -41,6 +45,7 @@ async function listBills(req, res) {
     const totalResult = await pool.query(
       `SELECT COALESCE(SUM(b.amount), 0) AS total
        FROM bills b
+       JOIN projects p ON p.id = b.project_id
        ${whereClause}`,
       values
     );
@@ -60,7 +65,7 @@ async function getBill(req, res) {
   const { id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT b.*, p.name AS project_name, u.full_name AS created_by_name
+      `SELECT b.*, p.name AS project_name, p.company_id AS project_company_id, u.full_name AS created_by_name
        FROM bills b
        JOIN projects p ON p.id = b.project_id
        LEFT JOIN users u ON u.id = b.created_by
@@ -70,7 +75,12 @@ async function getBill(req, res) {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Bill not found' });
     }
-    res.json(result.rows[0]);
+    const bill = result.rows[0];
+    if (req.user.role !== 'super_admin' && bill.project_company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to view this bill' });
+    }
+    delete bill.project_company_id;
+    res.json(bill);
   } catch (err) {
     console.error('Get bill error:', err);
     res.status(500).json({ error: 'Server error fetching bill' });
@@ -78,7 +88,6 @@ async function getBill(req, res) {
 }
 
 // POST /api/bills  (Admin, or Supervisor for their own project)
-// Uses multer - req.file will contain the uploaded image if provided
 async function createBill(req, res) {
   const { project_id, bill_type, description, vendor_name, amount, bill_date, payment_status } = req.body;
 
@@ -91,9 +100,17 @@ async function createBill(req, res) {
     return res.status(400).json({ error: `bill_type must be one of: ${validTypes.join(', ')}` });
   }
 
-  const imagePath = req.file ? `/uploads/bills/${req.file.filename}` : null;
-
   try {
+    const projectCheck = await pool.query('SELECT company_id FROM projects WHERE id = $1', [project_id]);
+    if (projectCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (req.user.role !== 'super_admin' && projectCheck.rows[0].company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to add bills to this project' });
+    }
+
+    const imagePath = req.file ? `/uploads/bills/${req.file.filename}` : null;
+
     const result = await pool.query(
       `INSERT INTO bills (project_id, bill_type, description, vendor_name, amount, bill_date, payment_status, image_path, created_by, updated_by)
        VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE), COALESCE($7, 'pending'), $8, $9, $9)
@@ -116,17 +133,24 @@ async function createBill(req, res) {
 }
 
 // PUT /api/bills/:id
-// Admin can always edit. Supervisor can only edit their own entries within 24 hours.
 async function updateBill(req, res) {
   const { id } = req.params;
   const { description, vendor_name, amount, bill_date, payment_status, bill_type } = req.body;
 
   try {
-    const existing = await pool.query('SELECT * FROM bills WHERE id = $1', [id]);
+    const existing = await pool.query(
+      `SELECT b.*, p.company_id AS project_company_id FROM bills b
+       JOIN projects p ON p.id = b.project_id WHERE b.id = $1`,
+      [id]
+    );
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Bill not found' });
     }
     const bill = existing.rows[0];
+
+    if (req.user.role !== 'super_admin' && bill.project_company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to edit this bill' });
+    }
 
     if (req.user.role === 'supervisor') {
       const isOwner = bill.created_by === req.user.id;
@@ -172,10 +196,19 @@ async function updateBill(req, res) {
 async function deleteBill(req, res) {
   const { id } = req.params;
   try {
-    const result = await pool.query('DELETE FROM bills WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
+    const existing = await pool.query(
+      `SELECT b.*, p.company_id AS project_company_id FROM bills b
+       JOIN projects p ON p.id = b.project_id WHERE b.id = $1`,
+      [id]
+    );
+    if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Bill not found' });
     }
+    if (req.user.role !== 'super_admin' && existing.rows[0].project_company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to delete this bill' });
+    }
+
+    const result = await pool.query('DELETE FROM bills WHERE id = $1 RETURNING *', [id]);
 
     await pool.query(
       `INSERT INTO audit_log (table_name, record_id, action, changed_by, details)
@@ -191,4 +224,3 @@ async function deleteBill(req, res) {
 }
 
 module.exports = { listBills, getBill, createBill, updateBill, deleteBill };
-
