@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   HardHat,
   LayoutDashboard,
@@ -17,7 +18,9 @@ import {
   MessageSquare,
   History,
   UserCheck,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -40,6 +43,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
 
@@ -49,7 +53,7 @@ export default function Sidebar() {
         <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[var(--accent-ink)] flex items-center justify-center shrink-0">
           <HardHat className="w-5 h-5" />
         </div>
-        <span className="font-[var(--font-display)] font-bold text-lg tracking-wide">EmployeeDeployee</span>
+        <span className="font-[var(--font-display)] font-bold text-lg tracking-wide text-white">EmployeeDeployee</span>
       </div>
 
       <nav className="flex-1 py-4 px-3 overflow-y-auto">
@@ -76,11 +80,19 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-4 py-4 border-t border-white/10">
-        <p className="text-sm font-medium truncate">{user?.full_name}</p>
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center justify-between px-3 py-1.5 mb-3 rounded-md text-xs font-medium border border-white/20 text-white/80 hover:bg-white/10 transition"
+        >
+          <span className="capitalize">{theme} Mode</span>
+          {theme === 'light' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+
+        <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
         <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition"
+          className="w-full flex items-center justify-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition text-white"
         >
           <LogOut className="w-4 h-4" />
           <span>Log out</span>
