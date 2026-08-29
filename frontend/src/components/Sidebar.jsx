@@ -30,7 +30,7 @@ export default function Sidebar() {
         <div className="w-8 h-8 rounded bg-[var(--accent)] flex items-center justify-center">
           <span className="font-[var(--font-display)] text-[var(--accent-ink)] text-sm font-bold">CM</span>
         </div>
-        <span className="font-[var(--font-display)] font-bold text-lg tracking-wide">Site Manager</span>
+        <span className="font-[var(--font-display)] font-bold text-lg tracking-wide">EmployeeDeployee</span>
       </div>
 
       <nav className="flex-1 py-4 px-3 overflow-y-auto">

@@ -35,7 +35,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-md bg-[var(--ink)] mb-4">
             <span className="font-[var(--font-display)] text-[var(--accent)] text-2xl font-bold">CM</span>
           </div>
-          <h1>Site Manager</h1>
+          <h1>Employee Deployee</h1>
           <p className="text-[var(--ink-soft)] text-sm mt-1">Sign in to your account</p>
         </div>
 
@@ -59,7 +59,7 @@ export default function Login() {
             required
             autoFocus
             className="w-full px-3 py-2 mb-4 border border-[var(--line)] rounded-md text-[var(--ink)] focus:border-[var(--accent)] outline-none"
-            placeholder="e.g. admin"
+            placeholder="e.g. user001"
           />
 
           <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
@@ -71,7 +71,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
             className="w-full px-3 py-2 mb-6 border border-[var(--line)] rounded-md text-[var(--ink)] focus:border-[var(--accent)] outline-none"
-            placeholder="••••••••"
+            placeholder="********"
           />
 
           <button
