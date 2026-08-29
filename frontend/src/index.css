@@ -2,23 +2,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Core palette */
+  /* Core palette - Light Mode */
   --ink: #1b2430;        /* navy/charcoal - sidebar, headings */
   --ink-soft: #5b6472;   /* secondary text */
   --bg: #f5f6f4;         /* app background - warm concrete grey */
   --surface: #ffffff;    /* cards, tables */
   --line: #dadde1;       /* borders, dividers */
-  --accent: #f2a900;     /* hi-vis amber - the one accent color */
+  --accent: #f2a900;     /* hi-vis amber */
   --accent-ink: #1b2430; /* text on amber */
 
-  /* Status colors (attendance / salary / bills) */
-  --status-good: #2e7d4f;    /* present / paid */
+  /* Status colors */
+  --status-good: #2e7d4f;
   --status-good-bg: #e7f3ec;
-  --status-warn: #c77700;    /* partial / pending */
+  --status-warn: #c77700;
   --status-warn-bg: #fbf0dd;
-  --status-bad: #c0392b;     /* absent / overdue */
+  --status-bad: #c0392b;
   --status-bad-bg: #fbe9e7;
-  --status-neutral: #5b6472; /* leave / n/a */
+  --status-neutral: #5b6472;
   --status-neutral-bg: #eceef0;
 
   /* Type */
@@ -32,6 +32,29 @@
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="dark"] {
+  /* Core palette - Dark Mode */
+  --ink: #f0f4f8;        /* primary light text */
+  --ink-soft: #94a3b8;   /* secondary text */
+  --bg: #0f172a;         /* dark background */
+  --surface: #1e293b;    /* dark cards/tables */
+  --line: #334155;       /* dark borders */
+  --accent: #f2a900;     /* keeps signature amber */
+  --accent-ink: #0f172a;
+
+  /* Dark mode status color adjustments */
+  --status-good: #4ade80;
+  --status-good-bg: #064e3b;
+  --status-warn: #fbbf24;
+  --status-warn-bg: #78350f;
+  --status-bad: #f87171;
+  --status-bad-bg: #7f1d1d;
+  --status-neutral: #94a3b8;
+  --status-neutral-bg: #334155;
+
+  color-scheme: dark;
 }
 
 * {
@@ -57,7 +80,6 @@ h3 { font-size: 18px; }
 
 p { margin: 0; }
 
-/* Status tag - the signature element, used consistently for attendance/salary/bill status */
 .status-tag {
   display: inline-flex;
   align-items: center;

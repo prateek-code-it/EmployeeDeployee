@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import ComingSoon from './components/ComingSoon';
@@ -23,36 +24,38 @@ import EmployeeRequests from './pages/EmployeeRequests';
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/bills" element={<Bills />} />
-            <Route path="/attendance" element={<Attendance />} />
-	    <Route path="/material" element={<Material />} />
-	    <Route path="/machinery" element={<Machinery />} />
-	    <Route path="/purchase" element={<Purchase />} />
-	    <Route path="/dpr" element={<DPR />} />
-            <Route path="/salary" element={<Salary />} />
-            <Route path="/requests" element={<EmployeeRequests />} />
-            <Route path="/chat" element={<ComingSoon title="Messages" />} />
-            <Route path="/audit-log" element={<AuditLog />} />
-	    <Route path="/companies" element={<Companies />} />
-	    <Route path="/users" element={<Users />} />
-          </Route>
-        </Routes>
-      </AuthProvider>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/bills" element={<Bills />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/material" element={<Material />} />
+              <Route path="/machinery" element={<Machinery />} />
+              <Route path="/purchase" element={<Purchase />} />
+              <Route path="/dpr" element={<DPR />} />
+              <Route path="/salary" element={<Salary />} />
+              <Route path="/requests" element={<EmployeeRequests />} />
+              <Route path="/chat" element={<ComingSoon title="Messages" />} />
+              <Route path="/audit-log" element={<AuditLog />} />
+              <Route path="/companies" element={<Companies />} />
+              <Route path="/users" element={<Users />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
