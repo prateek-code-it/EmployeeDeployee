@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { HardHat } from 'lucide-react';
 
 export default function Login() {
   const [loginId, setLoginId] = useState('');
@@ -32,8 +33,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-md bg-[var(--ink)] mb-4">
-            <span className="font-[var(--font-display)] text-[var(--accent)] text-2xl font-bold">CM</span>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--ink)] mb-4 text-[var(--accent)] shadow-sm">
+            <HardHat className="w-6 h-6" />
           </div>
           <h1>Employee Deployee</h1>
           <p className="text-[var(--ink-soft)] text-sm mt-1">Sign in to your account</p>
