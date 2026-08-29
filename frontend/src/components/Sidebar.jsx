@@ -48,9 +48,9 @@ export default function Sidebar() {
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
 
   return (
-    <aside className="w-56 shrink-0 bg-[var(--ink)] text-white flex flex-col h-screen sticky top-0">
+    <aside className="w-56 shrink-0 bg-[#1b2430] text-white flex flex-col h-screen sticky top-0 border-r border-white/10">
       <div className="px-5 py-5 flex items-center gap-2.5 border-b border-white/10">
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[var(--accent-ink)] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shrink-0">
           <HardHat className="w-5 h-5" />
         </div>
         <span className="font-[var(--font-display)] font-bold text-lg tracking-wide text-white">EmployeeDeployee</span>
@@ -67,7 +67,7 @@ export default function Sidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium mb-1 transition ${
                   isActive
-                    ? 'bg-[var(--accent)] text-[var(--accent-ink)]'
+                    ? 'bg-[var(--accent)] text-[#1b2430]'
                     : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`
               }
@@ -80,13 +80,28 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-4 py-4 border-t border-white/10">
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-3 py-1.5 mb-3 rounded-md text-xs font-medium border border-white/20 text-white/80 hover:bg-white/10 transition"
-        >
-          <span className="capitalize">{theme} Mode</span>
-          {theme === 'light' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+        {/* Sliding Theme Toggle Switch */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          <span className="text-xs font-medium text-white/70 capitalize">{theme} Mode</span>
+          <button
+            onClick={toggleTheme}
+            type="button"
+            className="relative w-12 h-6 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors duration-300 focus:outline-none"
+            aria-label="Toggle theme"
+          >
+            <div
+              className={`w-5 h-5 rounded-full bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shadow-md transform transition-transform duration-300 ${
+                theme === 'light' ? 'translate-x-6' : 'translate-x-0'
+              }`}
+            >
+              {theme === 'light' ? (
+                <Sun className="w-3.5 h-3.5 stroke-[2.5]" />
+              ) : (
+                <Moon className="w-3.5 h-3.5 stroke-[2.5]" />
+              )}
+            </div>
+          </button>
+        </div>
 
         <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
         <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
