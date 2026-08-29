@@ -53,33 +53,33 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`shrink-0 bg-[#1b2430] text-white flex flex-col h-screen sticky top-0 border-r border-white/10 transition-all duration-300 relative ${
+      className={`relative flex flex-col h-screen sticky top-0 bg-[#1b2430] text-white border-r border-white/10 transition-all duration-300 shrink-0 ${
         isCollapsed ? 'w-16' : 'w-60'
       }`}
     >
-      {/* Collapse/Expand Toggle Button */}
+      {/* Toggle Button Floating on Right Edge */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         type="button"
-        className="absolute -right-3 top-6 bg-[var(--accent)] text-[#1b2430] rounded-full p-1 shadow-md hover:scale-110 transition-transform cursor-pointer z-10"
-        title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+        className="absolute -right-3 top-5 z-20 flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent)] text-[#1b2430] shadow-md hover:scale-110 transition-transform cursor-pointer"
+        aria-label="Toggle sidebar collapse"
       >
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
 
       {/* Header / Logo */}
-      <div className={`px-4 py-5 flex items-center border-b border-white/10 min-w-0 ${isCollapsed ? 'justify-center' : 'gap-2.5'}`}>
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shrink-0" title="EmployeeDeployee">
+      <div className="h-16 px-4 flex items-center border-b border-white/10 overflow-hidden shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shrink-0">
           <HardHat className="w-5 h-5" />
         </div>
         {!isCollapsed && (
-          <span className="font-[var(--font-display)] font-bold text-base tracking-wide text-white truncate">
+          <span className="ml-3 font-[var(--font-display)] font-bold text-base tracking-wide text-white truncate">
             EmployeeDeployee
           </span>
         )}
       </div>
 
-      {/* Navigation Items */}
+      {/* Navigation Links */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto overflow-x-hidden">
         {visibleItems.map((item) => {
           const Icon = item.icon;
@@ -90,7 +90,7 @@ export default function Sidebar() {
               end={item.exact}
               title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 py-2 rounded-md text-sm font-medium mb-1 transition ${
+                `flex items-center h-10 rounded-md text-sm font-medium mb-1 transition-colors ${
                   isCollapsed ? 'justify-center px-0' : 'px-3'
                 } ${
                   isActive
@@ -100,23 +100,20 @@ export default function Sidebar() {
               }
             >
               <Icon className="w-5 h-5 shrink-0" />
-              {!isCollapsed && <span className="truncate">{item.label}</span>}
+              {!isCollapsed && <span className="ml-3 truncate">{item.label}</span>}
             </NavLink>
           );
         })}
       </nav>
 
-      {/* Footer / Controls */}
-      <div className="px-3 py-4 border-t border-white/10">
-        {/* Theme Toggle */}
-        <div className={`flex items-center mb-4 ${isCollapsed ? 'justify-center' : 'justify-between px-1'}`}>
+      {/* Footer / User & Theme */}
+      <div className="p-3 border-t border-white/10 shrink-0 overflow-hidden">
+        <div className={`flex items-center mb-3 ${isCollapsed ? 'justify-center' : 'justify-between px-1'}`}>
           {!isCollapsed && <span className="text-xs font-medium text-white/70 capitalize">{theme} Mode</span>}
           <button
             onClick={toggleTheme}
             type="button"
-            title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-            className="relative w-10 h-5 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors duration-300 focus:outline-none cursor-pointer shrink-0"
-            aria-label="Toggle theme"
+            className="relative w-10 h-5 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors focus:outline-none cursor-pointer shrink-0"
           >
             <div
               className={`w-4 h-4 rounded-full bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shadow-md transform transition-transform duration-300 ${
@@ -132,21 +129,17 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* User Info */}
         {!isCollapsed && (
-          <>
+          <div className="mb-3 px-1">
             <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
-            <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
-          </>
+            <p className="text-xs text-white/50 capitalize truncate">{user?.role?.replace('_', ' ')}</p>
+          </div>
         )}
 
-        {/* Logout Button */}
         <button
           onClick={logout}
           title={isCollapsed ? 'Log out' : undefined}
-          className={`w-full flex items-center justify-center gap-2 text-sm py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition text-white cursor-pointer ${
-            isCollapsed ? 'px-0' : 'px-3'
-          }`}
+          className="w-full flex items-center h-9 justify-center gap-2 text-sm rounded-md border border-white/20 hover:bg-white/10 transition text-white cursor-pointer"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           {!isCollapsed && <span>Log out</span>}
