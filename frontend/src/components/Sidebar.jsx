@@ -48,12 +48,14 @@ export default function Sidebar() {
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
 
   return (
-    <aside className="w-56 shrink-0 bg-[#1b2430] text-white flex flex-col h-screen sticky top-0 border-r border-white/10">
-      <div className="px-5 py-5 flex items-center gap-2.5 border-b border-white/10">
+    <aside className="w-60 shrink-0 bg-[#1b2430] text-white flex flex-col h-screen sticky top-0 border-r border-white/10">
+      <div className="px-4 py-5 flex items-center gap-2.5 border-b border-white/10 min-w-0">
         <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shrink-0">
           <HardHat className="w-5 h-5" />
         </div>
-        <span className="font-[var(--font-display)] font-bold text-lg tracking-wide text-white">EmployeeDeployee</span>
+        <span className="font-[var(--font-display)] font-bold text-base tracking-wide text-white truncate">
+          EmployeeDeployee
+        </span>
       </div>
 
       <nav className="flex-1 py-4 px-3 overflow-y-auto">
@@ -73,20 +75,19 @@ export default function Sidebar() {
               }
             >
               <Icon className="w-4 h-4 shrink-0" />
-              <span>{item.label}</span>
+              <span className="truncate">{item.label}</span>
             </NavLink>
           );
         })}
       </nav>
 
       <div className="px-4 py-4 border-t border-white/10">
-        {/* Sliding Theme Toggle Switch */}
         <div className="flex items-center justify-between mb-4 px-1">
           <span className="text-xs font-medium text-white/70 capitalize">{theme} Mode</span>
           <button
             onClick={toggleTheme}
             type="button"
-            className="relative w-12 h-6 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors duration-300 focus:outline-none"
+            className="relative w-12 h-6 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors duration-300 focus:outline-none cursor-pointer"
             aria-label="Toggle theme"
           >
             <div
@@ -107,7 +108,7 @@ export default function Sidebar() {
         <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition text-white"
+          className="w-full flex items-center justify-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition text-white cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           <span>Log out</span>
