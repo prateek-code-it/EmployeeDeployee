@@ -1,5 +1,14 @@
 const pool = require('../config/db');
 
+async function verifyProjectAccess(projectId, req) {
+  const result = await pool.query('SELECT company_id FROM projects WHERE id = $1', [projectId]);
+  if (result.rows.length === 0) return { ok: false, status: 404, error: 'Project not found' };
+  if (req.user.role !== 'super_admin' && result.rows[0].company_id !== req.user.company_id) {
+    return { ok: false, status: 403, error: 'You do not have permission to act on this project' };
+  }
+  return { ok: true };
+}
+
 // POST /api/purchase/requests  (Admin, Supervisor for their project)
 async function createPR(req, res) {
   const { project_id, description, estimated_cost } = req.body;
@@ -7,6 +16,9 @@ async function createPR(req, res) {
     return res.status(400).json({ error: 'project_id and description are required' });
   }
   try {
+    const access = await verifyProjectAccess(project_id, req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+
     const result = await pool.query(
       `INSERT INTO purchase_requests (project_id, description, estimated_cost, requested_by)
        VALUES ($1, $2, $3, $4) RETURNING *`,
@@ -25,6 +37,11 @@ async function listPRs(req, res) {
   const conditions = [];
   const values = [];
   let i = 1;
+
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`p.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (project_id) { conditions.push(`pr.project_id = $${i++}`); values.push(project_id); }
   if (status) { conditions.push(`pr.status = $${i++}`); values.push(status); }
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -47,10 +64,25 @@ async function listPRs(req, res) {
   }
 }
 
+async function verifyPRAccess(prId, req) {
+  const result = await pool.query(
+    `SELECT p.company_id FROM purchase_requests pr JOIN projects p ON p.id = pr.project_id WHERE pr.id = $1`,
+    [prId]
+  );
+  if (result.rows.length === 0) return { ok: false, status: 404, error: 'Purchase request not found' };
+  if (req.user.role !== 'super_admin' && result.rows[0].company_id !== req.user.company_id) {
+    return { ok: false, status: 403, error: 'You do not have permission to act on this request' };
+  }
+  return { ok: true };
+}
+
 // POST /api/purchase/requests/:id/approve  (Admin only)
 async function approvePR(req, res) {
   const { id } = req.params;
   try {
+    const access = await verifyPRAccess(id, req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+
     const result = await pool.query(
       `UPDATE purchase_requests SET status = 'approved', reviewed_by = $1, reviewed_at = now()
        WHERE id = $2 AND status = 'pending' RETURNING *`,
@@ -69,6 +101,9 @@ async function rejectPR(req, res) {
   const { id } = req.params;
   const { rejection_reason } = req.body;
   try {
+    const access = await verifyPRAccess(id, req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+
     const result = await pool.query(
       `UPDATE purchase_requests SET status = 'rejected', reviewed_by = $1, reviewed_at = now(), rejection_reason = $2
        WHERE id = $3 AND status = 'pending' RETURNING *`,
@@ -88,6 +123,10 @@ async function createPO(req, res) {
   if (!project_id || !vendor_id || !description || !amount) {
     return res.status(400).json({ error: 'project_id, vendor_id, description, and amount are required' });
   }
+
+  const access = await verifyProjectAccess(project_id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -117,6 +156,11 @@ async function listPOs(req, res) {
   const conditions = [];
   const values = [];
   let i = 1;
+
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`p.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (project_id) { conditions.push(`po.project_id = $${i++}`); values.push(project_id); }
   if (status) { conditions.push(`po.status = $${i++}`); values.push(status); }
   if (vendor_id) { conditions.push(`po.vendor_id = $${i++}`); values.push(vendor_id); }
@@ -145,7 +189,7 @@ async function getPO(req, res) {
   const { id } = req.params;
   try {
     const po = await pool.query(
-      `SELECT po.*, p.name AS project_name, v.name AS vendor_name
+      `SELECT po.*, p.name AS project_name, p.company_id AS project_company_id, v.name AS vendor_name
        FROM purchase_orders po
        JOIN projects p ON p.id = po.project_id
        JOIN vendors v ON v.id = po.vendor_id
@@ -153,6 +197,11 @@ async function getPO(req, res) {
       [id]
     );
     if (po.rows.length === 0) return res.status(404).json({ error: 'Purchase order not found' });
+    const order = po.rows[0];
+    if (req.user.role !== 'super_admin' && order.project_company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to view this purchase order' });
+    }
+    delete order.project_company_id;
 
     const grns = await pool.query(
       `SELECT g.*, u.full_name AS received_by_name FROM grns g
@@ -160,13 +209,24 @@ async function getPO(req, res) {
       [id]
     );
 
-    res.json({ ...po.rows[0], grns: grns.rows });
+    res.json({ ...order, grns: grns.rows });
   } catch (err) {
     console.error('Get PO error:', err);
     res.status(500).json({ error: 'Server error fetching purchase order' });
   }
 }
 
+async function verifyPOAccess(poId, req) {
+  const result = await pool.query(
+    `SELECT p.company_id FROM purchase_orders po JOIN projects p ON p.id = po.project_id WHERE po.id = $1`,
+    [poId]
+  );
+  if (result.rows.length === 0) return { ok: false, status: 404, error: 'Purchase order not found' };
+  if (req.user.role !== 'super_admin' && result.rows[0].company_id !== req.user.company_id) {
+    return { ok: false, status: 403, error: 'You do not have permission to act on this purchase order' };
+  }
+  return { ok: true };
+}
 
 // POST /api/purchase/grn  (Admin, Supervisor)
 async function createGRN(req, res) {
@@ -174,6 +234,10 @@ async function createGRN(req, res) {
   if (!po_id || !description) {
     return res.status(400).json({ error: 'po_id and description are required' });
   }
+
+  const access = await verifyPOAccess(po_id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -182,7 +246,6 @@ async function createGRN(req, res) {
        VALUES ($1, COALESCE($2, CURRENT_DATE), $3, $4, $5) RETURNING *`,
       [po_id, received_date || null, description, notes || null, req.user.id]
     );
-    // Mark the PO as at least partially received (simple status bump, not quantity-tracked)
     await client.query(
       "UPDATE purchase_orders SET status = 'partially_received' WHERE id = $1 AND status = 'open'",
       [po_id]
@@ -198,15 +261,17 @@ async function createGRN(req, res) {
   }
 }
 
-// PUT /api/purchase/orders/:id/close  (Admin only) - mark PO fully received/closed
+// PUT /api/purchase/orders/:id/close  (Admin only)
 async function closePO(req, res) {
   const { id } = req.params;
   try {
+    const access = await verifyPOAccess(id, req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+
     const result = await pool.query(
       "UPDATE purchase_orders SET status = 'closed' WHERE id = $1 RETURNING *",
       [id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Purchase order not found' });
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Close PO error:', err);

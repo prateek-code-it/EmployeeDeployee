@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -20,7 +21,9 @@ import {
   UserCheck,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -44,21 +47,40 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
 
   return (
-    <aside className="w-60 shrink-0 bg-[#1b2430] text-white flex flex-col h-screen sticky top-0 border-r border-white/10">
-      <div className="px-4 py-5 flex items-center gap-2.5 border-b border-white/10 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shrink-0">
+    <aside
+      className={`shrink-0 bg-[#1b2430] text-white flex flex-col h-screen sticky top-0 border-r border-white/10 transition-all duration-300 relative ${
+        isCollapsed ? 'w-16' : 'w-60'
+      }`}
+    >
+      {/* Collapse/Expand Toggle Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        type="button"
+        className="absolute -right-3 top-6 bg-[var(--accent)] text-[#1b2430] rounded-full p-1 shadow-md hover:scale-110 transition-transform cursor-pointer z-10"
+        title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+      >
+        {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+      </button>
+
+      {/* Header / Logo */}
+      <div className={`px-4 py-5 flex items-center border-b border-white/10 min-w-0 ${isCollapsed ? 'justify-center' : 'gap-2.5'}`}>
+        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shrink-0" title="EmployeeDeployee">
           <HardHat className="w-5 h-5" />
         </div>
-        <span className="font-[var(--font-display)] font-bold text-base tracking-wide text-white truncate">
-          EmployeeDeployee
-        </span>
+        {!isCollapsed && (
+          <span className="font-[var(--font-display)] font-bold text-base tracking-wide text-white truncate">
+            EmployeeDeployee
+          </span>
+        )}
       </div>
 
-      <nav className="flex-1 py-4 px-3 overflow-y-auto">
+      {/* Navigation Items */}
+      <nav className="flex-1 py-4 px-2 overflow-y-auto overflow-x-hidden">
         {visibleItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -66,52 +88,68 @@ export default function Sidebar() {
               key={item.to}
               to={item.to}
               end={item.exact}
+              title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium mb-1 transition ${
+                `flex items-center gap-3 py-2 rounded-md text-sm font-medium mb-1 transition ${
+                  isCollapsed ? 'justify-center px-0' : 'px-3'
+                } ${
                   isActive
                     ? 'bg-[var(--accent)] text-[#1b2430]'
                     : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`
               }
             >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <Icon className="w-5 h-5 shrink-0" />
+              {!isCollapsed && <span className="truncate">{item.label}</span>}
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-white/10">
-        <div className="flex items-center justify-between mb-4 px-1">
-          <span className="text-xs font-medium text-white/70 capitalize">{theme} Mode</span>
+      {/* Footer / Controls */}
+      <div className="px-3 py-4 border-t border-white/10">
+        {/* Theme Toggle */}
+        <div className={`flex items-center mb-4 ${isCollapsed ? 'justify-center' : 'justify-between px-1'}`}>
+          {!isCollapsed && <span className="text-xs font-medium text-white/70 capitalize">{theme} Mode</span>}
           <button
             onClick={toggleTheme}
             type="button"
-            className="relative w-12 h-6 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors duration-300 focus:outline-none cursor-pointer"
+            title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+            className="relative w-10 h-5 rounded-full bg-white/10 border border-white/20 p-0.5 transition-colors duration-300 focus:outline-none cursor-pointer shrink-0"
             aria-label="Toggle theme"
           >
             <div
-              className={`w-5 h-5 rounded-full bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shadow-md transform transition-transform duration-300 ${
-                theme === 'light' ? 'translate-x-6' : 'translate-x-0'
+              className={`w-4 h-4 rounded-full bg-[var(--accent)] text-[#1b2430] flex items-center justify-center shadow-md transform transition-transform duration-300 ${
+                theme === 'light' ? 'translate-x-5' : 'translate-x-0'
               }`}
             >
               {theme === 'light' ? (
-                <Sun className="w-3.5 h-3.5 stroke-[2.5]" />
+                <Sun className="w-3 h-3 stroke-[2.5]" />
               ) : (
-                <Moon className="w-3.5 h-3.5 stroke-[2.5]" />
+                <Moon className="w-3 h-3 stroke-[2.5]" />
               )}
             </div>
           </button>
         </div>
 
-        <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
-        <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
+        {/* User Info */}
+        {!isCollapsed && (
+          <>
+            <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
+            <p className="text-xs text-white/50 capitalize mb-3">{user?.role?.replace('_', ' ')}</p>
+          </>
+        )}
+
+        {/* Logout Button */}
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition text-white cursor-pointer"
+          title={isCollapsed ? 'Log out' : undefined}
+          className={`w-full flex items-center justify-center gap-2 text-sm py-1.5 rounded-md border border-white/20 hover:bg-white/10 transition text-white cursor-pointer ${
+            isCollapsed ? 'px-0' : 'px-3'
+          }`}
         >
-          <LogOut className="w-4 h-4" />
-          <span>Log out</span>
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!isCollapsed && <span>Log out</span>}
         </button>
       </div>
     </aside>
