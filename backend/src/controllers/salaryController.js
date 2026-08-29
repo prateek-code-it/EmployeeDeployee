@@ -1,18 +1,26 @@
 const pool = require('../config/db');
 
-// POST /api/salary/generate  (Admin only)
-// body: { month, year }
-// Creates a 'pending' salary_payments row for every active employee for that month,
-// using their current monthly_salary as the base. Skips employees who already have one.
+// POST /api/salary/generate  (Super Admin, Company Head)
 async function generateMonthlySalaries(req, res) {
-  const { month, year } = req.body;
+  const { month, year, company_id } = req.body;
 
   if (!month || !year) {
     return res.status(400).json({ error: 'month and year are required' });
   }
 
+  let targetCompanyId = req.user.company_id;
+  if (req.user.role === 'super_admin') {
+    if (!company_id) {
+      return res.status(400).json({ error: 'company_id is required when generating salaries as Super Admin' });
+    }
+    targetCompanyId = company_id;
+  }
+
   try {
-    const employees = await pool.query('SELECT id, monthly_salary FROM employees WHERE is_active = true');
+    const employees = await pool.query(
+      'SELECT id, monthly_salary FROM employees WHERE is_active = true AND company_id = $1',
+      [targetCompanyId]
+    );
 
     const created = [];
     for (const emp of employees.rows) {
@@ -46,6 +54,10 @@ async function listSalaries(req, res) {
   const values = [];
   let i = 1;
 
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`e.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (employee_id) {
     conditions.push(`sp.employee_id = $${i++}`);
     values.push(employee_id);
@@ -79,6 +91,7 @@ async function listSalaries(req, res) {
     const pendingTotal = await pool.query(
       `SELECT COALESCE(SUM(sp.base_salary - sp.total_paid), 0) AS total_pending
        FROM salary_payments sp
+       JOIN employees e ON e.id = sp.employee_id
        ${whereClause ? whereClause + " AND sp.status != 'paid'" : "WHERE sp.status != 'paid'"}`,
       values
     );
@@ -93,13 +106,12 @@ async function listSalaries(req, res) {
   }
 }
 
-
-// GET /api/salary/:id  (includes full payment transaction history)
+// GET /api/salary/:id
 async function getSalary(req, res) {
   const { id } = req.params;
   try {
     const salary = await pool.query(
-      `SELECT sp.*, e.full_name AS employee_name,
+      `SELECT sp.*, e.full_name AS employee_name, e.company_id AS employee_company_id,
               (sp.base_salary - sp.total_paid) AS balance_due
        FROM salary_payments sp
        JOIN employees e ON e.id = sp.employee_id
@@ -109,6 +121,11 @@ async function getSalary(req, res) {
     if (salary.rows.length === 0) {
       return res.status(404).json({ error: 'Salary record not found' });
     }
+    const record = salary.rows[0];
+    if (req.user.role !== 'super_admin' && record.employee_company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to view this salary record' });
+    }
+    delete record.employee_company_id;
 
     const transactions = await pool.query(
       `SELECT spt.*, u.full_name AS marked_by_name
@@ -119,15 +136,14 @@ async function getSalary(req, res) {
       [id]
     );
 
-    res.json({ ...salary.rows[0], transactions: transactions.rows });
+    res.json({ ...record, transactions: transactions.rows });
   } catch (err) {
     console.error('Get salary error:', err);
     res.status(500).json({ error: 'Server error fetching salary record' });
   }
 }
 
-// POST /api/salary/:id/payments  (Admin only)
-// Records one payment (full or partial/advance). Updates total_paid and status automatically.
+// POST /api/salary/:id/payments  (Super Admin, Company Head)
 async function addPayment(req, res) {
   const { id } = req.params;
   const { amount, payment_mode, payment_date, notes } = req.body;
@@ -140,12 +156,22 @@ async function addPayment(req, res) {
   try {
     await client.query('BEGIN');
 
-    const salaryResult = await client.query('SELECT * FROM salary_payments WHERE id = $1 FOR UPDATE', [id]);
+    const salaryResult = await client.query(
+      `SELECT sp.*, e.company_id AS employee_company_id FROM salary_payments sp
+       JOIN employees e ON e.id = sp.employee_id
+       WHERE sp.id = $1 FOR UPDATE OF sp`,
+      [id]
+    );
     if (salaryResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Salary record not found' });
     }
     const salary = salaryResult.rows[0];
+
+    if (req.user.role !== 'super_admin' && salary.employee_company_id !== req.user.company_id) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'You do not have permission to modify this salary record' });
+    }
 
     await client.query(
       `INSERT INTO salary_payment_transactions (salary_payment_id, amount, payment_mode, payment_date, marked_by, notes)
