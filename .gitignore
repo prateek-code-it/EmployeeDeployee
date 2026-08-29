@@ -9,3 +9,5 @@ frontend/build/
 frontend/.env
 .DS_Store
 issues.txt
+schema1.sql
+schema2.sql
