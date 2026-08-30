@@ -1,5 +1,14 @@
 const pool = require('../config/db');
 
+async function verifyProjectAccess(projectId, req) {
+  const result = await pool.query('SELECT company_id FROM projects WHERE id = $1', [projectId]);
+  if (result.rows.length === 0) return { ok: false, status: 404, error: 'Project not found' };
+  if (req.user.role !== 'super_admin' && result.rows[0].company_id !== req.user.company_id) {
+    return { ok: false, status: 403, error: 'You do not have permission to act on this project' };
+  }
+  return { ok: true };
+}
+
 // GET /api/materials  (catalog - all material types)
 async function listMaterials(req, res) {
   try {
@@ -20,7 +29,7 @@ async function listMaterials(req, res) {
   }
 }
 
-// POST /api/materials  (Super Admin, Company Head) - add a new material type to the catalog
+// POST /api/materials  (Super Admin, Company Head)
 async function createMaterial(req, res) {
   const { name, unit, category, company_id } = req.body;
   if (!name || !unit) {
@@ -57,6 +66,9 @@ async function createReceipt(req, res) {
     return res.status(400).json({ error: 'project_id, material_id, and quantity are required' });
   }
   try {
+    const access = await verifyProjectAccess(project_id, req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+
     const result = await pool.query(
       `INSERT INTO material_receipts (project_id, material_id, quantity, vendor_name, receipt_date, notes, received_by)
        VALUES ($1, $2, $3, $4, COALESCE($5, CURRENT_DATE), $6, $7) RETURNING *`,
@@ -75,6 +87,11 @@ async function listReceipts(req, res) {
   const conditions = [];
   const values = [];
   let i = 1;
+
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`p.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (project_id) { conditions.push(`mr.project_id = $${i++}`); values.push(project_id); }
   if (material_id) { conditions.push(`mr.material_id = $${i++}`); values.push(material_id); }
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -104,6 +121,9 @@ async function createIssue(req, res) {
     return res.status(400).json({ error: 'project_id, material_id, and quantity are required' });
   }
   try {
+    const access = await verifyProjectAccess(project_id, req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+
     const result = await pool.query(
       `INSERT INTO material_issues (project_id, material_id, quantity, issued_to, issue_date, notes, issued_by)
        VALUES ($1, $2, $3, $4, COALESCE($5, CURRENT_DATE), $6, $7) RETURNING *`,
@@ -122,6 +142,11 @@ async function listIssues(req, res) {
   const conditions = [];
   const values = [];
   let i = 1;
+
+  if (req.user.role !== 'super_admin') {
+    conditions.push(`p.company_id = $${i++}`);
+    values.push(req.user.company_id);
+  }
   if (project_id) { conditions.push(`mi.project_id = $${i++}`); values.push(project_id); }
   if (material_id) { conditions.push(`mi.material_id = $${i++}`); values.push(material_id); }
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -145,12 +170,15 @@ async function listIssues(req, res) {
 }
 
 // GET /api/materials/stock?project_id=
-// Current balance per material for a project: SUM(receipts) - SUM(issues)
 async function getStock(req, res) {
   const { project_id } = req.query;
   if (!project_id) {
     return res.status(400).json({ error: 'project_id is required' });
   }
+
+  const access = await verifyProjectAccess(project_id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   try {
     const result = await pool.query(
       `SELECT m.id AS material_id, m.name AS material_name, m.unit,
