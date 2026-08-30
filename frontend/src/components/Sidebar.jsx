@@ -41,7 +41,7 @@ const NAV_ITEMS = [
   { to: '/requests', label: 'Employee Requests', icon: FileQuestion, roles: ['company_head', 'hr', 'supervisor'] },
   { to: '/chat', label: 'Messages', icon: MessageSquare, roles: ['company_head', 'supervisor', 'employee'] },
   { to: '/audit-log', label: 'Audit Log', icon: History, roles: ['company_head', 'super_admin'] },
-  { to: '/users', label: 'Users', icon: UserCheck, roles: ['company_head', 'hr', 'super_admin'] },
+  { to: '/users', label: 'Users', icon: UserCheck, roles: ['company_head', 'hr', 'super_admin','supervisor'] },
 ];
 
 export default function Sidebar() {
