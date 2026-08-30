@@ -1,11 +1,36 @@
 const pool = require('../config/db');
 
+async function verifyProjectAccess(projectId, req) {
+  const result = await pool.query('SELECT company_id FROM projects WHERE id = $1', [projectId]);
+  if (result.rows.length === 0) return { ok: false, status: 404, error: 'Project not found' };
+  if (req.user.role !== 'super_admin' && result.rows[0].company_id !== req.user.company_id) {
+    return { ok: false, status: 403, error: 'You do not have permission to act on this project' };
+  }
+  return { ok: true };
+}
+
+async function verifyBOQItemAccess(itemId, req) {
+  const result = await pool.query(
+    `SELECT p.company_id FROM boq_items b JOIN projects p ON p.id = b.project_id WHERE b.id = $1`,
+    [itemId]
+  );
+  if (result.rows.length === 0) return { ok: false, status: 404, error: 'BOQ item not found' };
+  if (req.user.role !== 'super_admin' && result.rows[0].company_id !== req.user.company_id) {
+    return { ok: false, status: 403, error: 'You do not have permission to act on this BOQ item' };
+  }
+  return { ok: true };
+}
+
 // POST /api/boq  (Admin, Supervisor for their project)
 async function createBOQItem(req, res) {
   const { project_id, item_no, description, unit, quantity, rate } = req.body;
   if (!project_id || !description) {
     return res.status(400).json({ error: 'project_id and description are required' });
   }
+
+  const access = await verifyProjectAccess(project_id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   try {
     const result = await pool.query(
       `INSERT INTO boq_items (project_id, item_no, description, unit, quantity, rate, created_by)
@@ -24,6 +49,9 @@ async function listBOQItems(req, res) {
   const { project_id } = req.query;
   if (!project_id) return res.status(400).json({ error: 'project_id is required' });
 
+  const access = await verifyProjectAccess(project_id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   try {
     const result = await pool.query(
       `SELECT *, (quantity * rate) AS amount FROM boq_items WHERE project_id = $1 ORDER BY item_no ASC, id ASC`,
@@ -41,6 +69,10 @@ async function listBOQItems(req, res) {
 async function updateBOQItem(req, res) {
   const { id } = req.params;
   const { item_no, description, unit, quantity, rate } = req.body;
+
+  const access = await verifyBOQItemAccess(id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   try {
     const result = await pool.query(
       `UPDATE boq_items SET
@@ -50,7 +82,6 @@ async function updateBOQItem(req, res) {
        WHERE id = $6 RETURNING *, (quantity * rate) AS amount`,
       [item_no, description, unit, quantity, rate, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'BOQ item not found' });
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Update BOQ item error:', err);
@@ -61,9 +92,12 @@ async function updateBOQItem(req, res) {
 // DELETE /api/boq/:id  (Admin only)
 async function deleteBOQItem(req, res) {
   const { id } = req.params;
+
+  const access = await verifyBOQItemAccess(id, req);
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
   try {
-    const result = await pool.query('DELETE FROM boq_items WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'BOQ item not found' });
+    await pool.query('DELETE FROM boq_items WHERE id = $1', [id]);
     res.json({ message: 'BOQ item deleted' });
   } catch (err) {
     console.error('Delete BOQ item error:', err);
@@ -72,4 +106,3 @@ async function deleteBOQItem(req, res) {
 }
 
 module.exports = { createBOQItem, listBOQItems, updateBOQItem, deleteBOQItem };
-
